@@ -102,10 +102,12 @@ public class DataLoader : MonoBehaviour
         Debug.Log("XROrigin found!");
         CenterXROrigin();
 
-        radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+        //radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+        radarShader = Resources.Load<Shader>("Shaders/RadarShader");
         if (radarShader == null)
         {
-            Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
+            //Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
+            Debug.LogError("Could not load RadarShader");
             return;
         }
 
