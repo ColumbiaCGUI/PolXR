@@ -251,8 +251,8 @@ public class DataLoader : MonoBehaviour
                 {
                     // Create LineRenderer for Flightline
                     lineObj = CreateLineRenderer(objFile, segmentContainer);
-                    int RadarGramLayer = LayerMask.NameToLayer("Radargram");
-                    lineObj.layer = RadarGramLayer;
+                    UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IlineObj = lineObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+                    IlineObj.interactionLayers = InteractionLayerMask.GetMask("Interactable");
                 }
                 else if (fileName.StartsWith("Data"))
                 {
@@ -261,41 +261,60 @@ public class DataLoader : MonoBehaviour
                     if (radarObj != null)
                     {
                         ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
+                        radarObj.transform.SetParent(segmentContainer.transform);
+                        //radarObj.transform.position = segmentContainer.transform.position;
+
+                        Transform flightline = segmentContainer.transform.Find("Flightline");
+                        if(flightline != null)
+                        {
+                            radarObj.transform.position = flightline.position;
+                        }
 
                         // Find and texture the Radar object's mesh
                         Transform meshChild = radarObj.transform.Find("mesh");
                         if (meshChild != null)
                         {
-                            string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
-                            if (File.Exists(texturePath))
+                            //meshChild.localPosition = Vector3.zero;
+
+                            /*if u want the radargrams to spwan slightly above flightlines:
+                            Vector3 meshPos = meshChild.position;
+                            meshPos.y += 1.0f;
+                            meshChild.position = meshPos;
+                            */
+                            MeshRenderer meshRenderer = meshChild.GetComponent<MeshRenderer>();
+
+                            if(meshRenderer != null)
                             {
-                                Texture2D texture = LoadTexture(texturePath);
-                                Material material = CreateRadarMaterial(texture);
-                                ApplyMaterial(meshChild.gameObject, material);
+                                string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
+                                if (File.Exists(texturePath))
+                                {
+                                    Texture2D texture = LoadTexture(texturePath);
+                                    Material material = CreateRadarMaterial(texture);
+                                    meshRenderer.material = material;
+                                }
+                                MeshRenderer rootMeshRenderer = radarObj.AddComponent<MeshRenderer>();
                             }
                         }
                         else
                         {
                             Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
                         }
-
-                        // Parent the Radar object to the segment container
-                        radarObj.transform.SetParent(segmentContainer.transform);
-
                         // Add necessary components to the Radar object
 
                         // Attach the Box Collider
                         radarObj.AddComponent<BoxCollider>();
                         // Attach the Grab Interactable
-                        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IradarObj = radarObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+                        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IradarObj = radarObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();                       
                         // Add Rotation Constraints for Y Axis Only
                         IradarObj.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.Instantaneous;
                         IradarObj.trackPosition = true;
                         IradarObj.trackRotation = false;
                         IradarObj.throwOnDetach = false;
                         IradarObj.matchAttachRotation = false;
-
+                        IradarObj.interactionLayers = InteractionLayerMask.GetMask("Interactable"); 
+                        
                         radarObj.GetComponent<Rigidbody>().useGravity = false;
+                        radarObj.GetComponent<Rigidbody>().isKinematic = true;
                         //radarObj.GetComponent<Rigidbody>().freezeRotation = false;
                         //GrabTransformerRotationAxisLock LockObj = radarObj.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
 

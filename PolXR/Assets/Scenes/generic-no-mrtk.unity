@@ -20190,7 +20190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_GroupName: Right
-  m_InteractionManager: {fileID: 0}
+  m_InteractionManager: {fileID: 2047877555}
   m_StartingGroupMembers:
   - {fileID: 770808493}
   - {fileID: 756228759}
