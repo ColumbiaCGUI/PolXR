@@ -15,8 +15,8 @@ MonoBehaviour:
   m_Comments: 
   m_ReadOnly: 1
   m_Value:
-    rightHandLocalPosition: {x: 0, y: 0.5, z: -0.03}
-    leftHandLocalPosition: {x: 0, y: 0.5, z: -0.03}
+    rightHandLocalPosition: {x: 0, y: -0.05, z: -0.03}
+    leftHandLocalPosition: {x: 0, y: -0.05, z: -0.03}
     rightHandLocalRotation: {x: 0, y: 0, z: 180}
     leftHandLocalRotation: {x: 0, y: 0, z: 180}
     palmReferenceAxis: 4
@@ -24,7 +24,7 @@ MonoBehaviour:
     requirePalmFacingUser: 0
     palmFacingUserDegreeAngleThreshold: 54
     requirePalmFacingUp: 1
-    palmFacingUpDegreeAngleThreshold: 70
+    palmFacingUpDegreeAngleThreshold: 72
     snapToGaze: 0
     snapToGazeAngleThreshold: 30
     hideDelaySeconds: 0.15

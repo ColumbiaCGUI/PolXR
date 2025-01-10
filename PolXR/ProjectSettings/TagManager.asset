@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Active
   - Radar Image
+  - RoomLight
   layers:
   - Default
   - TransparentFX
@@ -23,7 +24,7 @@ TagManager:
   - 
   - 
   - FlightLines
-  - Radargrams
+  - Radargram
   - 
   - 
   - 
@@ -37,7 +38,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - XR Simulation
   - Spatial Awareness
   m_SortingLayers:
   - name: Default

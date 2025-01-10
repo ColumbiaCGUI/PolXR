@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using GLTFast;
-using Oculus.Platform;
+//using Oculus.Platform;
 using UnityEngine.XR.Interaction.Toolkit;
 
 public class LoadFlightLines : MonoBehaviour

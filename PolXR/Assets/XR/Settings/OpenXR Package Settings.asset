@@ -271,6 +271,7 @@ MonoBehaviour:
   m_Name: OculusXRFeature Android
   m_EditorClassIdentifier: 
   m_enabled: 1
+  <failedInitialization>k__BackingField: 0
   nameUi: OculusXR Feature
   version: 0.0.1
   featureIdInternal: com.oculus.openxr.feature.oculusxr
@@ -321,7 +322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feeef8d85de8db242bdda70cc7ff5acd, type: 3}
   m_Name: OculusTouchControllerProfile Android
   m_EditorClassIdentifier: 
-  m_enabled: 1
+  m_enabled: 0
   nameUi: Oculus Touch Controller Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.oculustouch
@@ -358,7 +359,6 @@ MonoBehaviour:
   - {fileID: -2935278926160578442}
   - {fileID: 5892607896714957908}
   - {fileID: -2928614845735530776}
-  - {fileID: -3031112775440875429}
   - {fileID: -3959978337748421632}
   - {fileID: -4527520422936186243}
   - {fileID: 189325723807032142}
@@ -502,7 +502,6 @@ MonoBehaviour:
   - {fileID: 8214205259283241375}
   - {fileID: 2145726107804102288}
   - {fileID: -386656557168714439}
-  - {fileID: 1008889139499943412}
   - {fileID: -5156662252117766785}
   - {fileID: 2604712290708399444}
   - {fileID: 7065598451630321737}
@@ -659,6 +658,7 @@ MonoBehaviour:
   m_Name: OculusXRFeature Standalone
   m_EditorClassIdentifier: 
   m_enabled: 1
+  <failedInitialization>k__BackingField: 0
   nameUi: OculusXR Feature
   version: 0.0.1
   featureIdInternal: com.oculus.openxr.feature.oculusxr
