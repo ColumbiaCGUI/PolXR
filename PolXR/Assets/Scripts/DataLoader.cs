@@ -7,6 +7,7 @@ using System.Linq;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.Samples.Hands;
+using Unity.XR.CoreUtils;
 //using Fusion;
 
 
@@ -27,12 +28,11 @@ public class MetaData
 
 public class DataLoader : MonoBehaviour
 {
-    public string demDirectoryPath;
-    public GameObject user;
+    public string demDirectoryPath;    
     public List<string> flightlineDirectories;
     private Shader radarShader;
     private GameObject menu;
-    
+    private  XROrigin xrOrigin;
 
     // public NetworkRunner runner;
 
@@ -93,6 +93,15 @@ public class DataLoader : MonoBehaviour
 
     void Start()
     {
+        xrOrigin = FindObjectOfType<XROrigin>();
+        if(xrOrigin == null)
+        {
+            Debug.LogError("No XROrigin found");
+            return;
+        }
+        Debug.Log("XROrigin found!");
+        CenterXROrigin();
+
         radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
         if (radarShader == null)
         {
@@ -125,21 +134,6 @@ public class DataLoader : MonoBehaviour
 
         // Process DEMs
         ProcessDEMs(demContainer);
-        //center the user 
-        //Vector3 demCenter = DEMCenter(demContainer);
-        //if(demCenter != Vector3.zero && user != null)
-        //{
-            //user.transform.position = demCenter;
-        //}
-
-        Vector3 demCentroid = GetDEMCentroid();
-        if(demCentroid != Vector3.zero && user != null)
-        {
-            user.transform.position = demCentroid;
-        }
-        else {
-            return;
-        }
 
         // Process Flightlines
         foreach (string flightlineDirectory in flightlineDirectories)
@@ -159,6 +153,19 @@ public class DataLoader : MonoBehaviour
         DisableMenus();
     }
 
+    private void CenterXROrigin()
+    {
+        Vector3 demCentroid = GetDEMCentroid();
+        if(demCentroid == Vector3.zero)
+        {
+            return;
+        }
+        if(xrOrigin != null)
+        {
+            xrOrigin.MoveCameraToWorldLocation(demCentroid);
+        }
+    }
+
     private void DisableAllRadarObjects(GameObject radarContainer)
     {
         foreach (Transform segment in radarContainer.transform)
@@ -173,37 +180,6 @@ public class DataLoader : MonoBehaviour
         }
     }
 
-    private Vector3 DEMCenter(GameObject demContainer)
-    {
-        if(demContainer == null) 
-        {
-            return Vector3.zero;
-        }
-        Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
-        bool boundsInitialized = false;
-
-        foreach(Transform child in demContainer.transform)
-        {
-            Renderer renderer = child.GetComponent<Renderer>();
-            if(renderer != null) 
-            {
-                if(!boundsInitialized)
-                {
-                    bounds = renderer.bounds;
-                    boundsInitialized = true;
-                }
-                else 
-                {
-                    bounds.Encapsulate(renderer.bounds);
-                }
-            }
-        }
-        if(!boundsInitialized)
-        {
-            return Vector3.zero;
-        }
-        return bounds.center;
-    }
     private void ProcessDEMs(GameObject parent)
     {
         Debug.Log("DataLoader Process DEMs called!");

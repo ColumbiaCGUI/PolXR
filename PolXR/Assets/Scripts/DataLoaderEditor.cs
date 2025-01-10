@@ -18,22 +18,12 @@ public class DataLoaderEditor : Editor
 
         // Flightline Directories Selection
         DrawFlightlineDirectoriesSelection(selector);
-        AssignUser(selector);
 
         // Apply modified properties
         serializedObject.ApplyModifiedProperties();
+
     }
 
-    private void AssignUser(DataLoader selector)
-    {
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("User (Main Camera)", EditorStyles.boldLabel);
-
-        selector.user = (GameObject)EditorGUILayout.ObjectField("User", selector.user, typeof(GameObject), true);
-        
-        GUILayout.Space(10);
-        EditorGUILayout.EndVertical();
-    }
     private void DrawDEMDirectorySelection(DataLoader selector)
     {
         EditorGUILayout.BeginVertical("box");
