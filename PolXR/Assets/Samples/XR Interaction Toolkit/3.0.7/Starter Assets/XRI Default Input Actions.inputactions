@@ -1035,6 +1035,28 @@
                 },
                 {
                     "name": "",
+                    "id": "f06a5317-fe20-4326-ab7a-37ebcad19533",
+                    "path": "<HandInteraction>{LeftHand}/pokePose/isTracked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e883b2a4-38de-4a8a-93da-5bca3a00e300",
+                    "path": "<HandInteraction>/pokePose/isTracked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "49a23327-a116-48c0-8af9-0d2c50c15a88",
                     "path": "<XRController>{LeftHand}/{Grip}",
                     "interactions": "",
@@ -1147,6 +1169,17 @@
                     "name": "",
                     "id": "ca931b95-39e0-4db1-9887-f5a5f68298d4",
                     "path": "<HoloLensHand>{LeftHand}/selectPressed",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UI Press",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "40d56430-b2b9-4915-90ea-90a73e2f61c6",
+                    "path": "<HandInteraction>{RightHand}/pokePose/isTracked",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -2106,6 +2139,28 @@
                 },
                 {
                     "name": "",
+                    "id": "ba3b519e-c344-41fa-a3e9-bd5277090e18",
+                    "path": "<HandInteraction>{RightHand}/pokePose/isTracked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0cd6c125-88b9-41e4-860d-d0283c4d9267",
+                    "path": "<HandInteraction>/pokePose/isTracked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "dd433817-216c-46b9-8dd3-f3a4ea1767b9",
                     "path": "<XRController>{RightHand}/{Grip}",
                     "interactions": "",
@@ -2218,6 +2273,17 @@
                     "name": "",
                     "id": "f8a900c7-8116-4f44-9d24-8f19caf07108",
                     "path": "<HoloLensHand>{RightHand}/selectPressed",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UI Press",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a841a902-20e0-4c3f-96ed-1a5614428a9e",
+                    "path": "<HandInteraction>{RightHand}/pokePose/isTracked",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

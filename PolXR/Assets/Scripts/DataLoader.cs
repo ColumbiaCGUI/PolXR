@@ -33,7 +33,6 @@ public class DataLoader : MonoBehaviour
     private Shader radarShader;
     private GameObject menu;
     private  XROrigin xrOrigin;
-
     // public NetworkRunner runner;
 
     public Vector3 GetDEMCentroid()
@@ -310,6 +309,9 @@ public class DataLoader : MonoBehaviour
                         lineObj.layer = LayerMask.NameToLayer("FlightLines");
                         //places flightline right above DEM
                         AdjustFlightline(segmentContainer, demCollider);
+                        // Attach mesh collider for accurate
+                        CreateMeshColliderForFlightline(lineObj);
+                        InteractionLogic script = lineObj.AddComponent<InteractionLogic>();
                     }
 
                     UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IlineObj = lineObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
@@ -381,6 +383,7 @@ public class DataLoader : MonoBehaviour
 
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarObj.layer = RadarGramLayer;
+                        radarObj.tag = "Radargram";
                     }
                 }
             }
@@ -400,6 +403,35 @@ public class DataLoader : MonoBehaviour
         return Instantiate(importedObj);
     }
 
+    private void CreateMeshColliderForFlightline(GameObject flightline)
+    {
+        LineRenderer lineRenderer = flightline.GetComponent<LineRenderer>();
+        if (lineRenderer == null)
+        {
+            Debug.LogWarning("No LineRenderer found on the flightline.");
+            return;
+        }
+
+        // Generate the mesh
+        Mesh mesh = LineRendererMeshUtility.CreateMeshFromLineRenderer(lineRenderer);
+
+        // Attach the mesh collider
+        MeshCollider meshCollider = flightline.AddComponent<MeshCollider>();
+        meshCollider.sharedMesh = mesh;
+        meshCollider.convex = false;
+        MakeRigidbodyKinematic(flightline);
+    }
+
+    private void MakeRigidbodyKinematic(GameObject flightline)
+    {
+        Rigidbody rb = flightline.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = flightline.AddComponent<Rigidbody>();
+        }
+        rb.isKinematic = true;
+        rb.useGravity = false; 
+    }
     private Texture2D LoadTexture(string texturePath)
     {
         byte[] fileData = File.ReadAllBytes(texturePath);
@@ -473,7 +505,7 @@ public class DataLoader : MonoBehaviour
             lineRenderer.endWidth = 0.1f;
 
             // Add a MeshCollider to the LineRenderer
-            AttachBoxColliders(lineObj, rotatedVertices.ToArray());
+            //AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
             // Add a click handler
             foreach (Transform child in parentContainer.transform)
