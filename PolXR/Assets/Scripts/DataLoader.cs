@@ -132,6 +132,7 @@ public class DataLoader : MonoBehaviour
 
         // Create DEM and Radar containers under Template
         GameObject demContainer = CreateChildGameObject("DEM", transform);
+
         GameObject radarContainer = CreateChildGameObject("Radar", transform);
 
         // Process DEMs
@@ -230,8 +231,61 @@ public class DataLoader : MonoBehaviour
         }
     }
 
+    private void AdjustFlightline(GameObject flightline, MeshCollider demCollider)
+    {
+        // Get the LineRenderer and its positions
+        LineRenderer lineRenderer = flightline.GetComponentInChildren<LineRenderer>();
+        if (lineRenderer == null)
+        {
+            return;
+        }
+
+        int positionCount = lineRenderer.positionCount;
+        Vector3[] positions = new Vector3[positionCount];
+        lineRenderer.GetPositions(positions);
+
+        // Temporarily disable flightline colliders to avoid interference
+        Collider[] colliders = flightline.GetComponentsInChildren<Collider>();
+        foreach (Collider collider in colliders)
+        {
+            collider.enabled = false;
+        }
+
+        // Adjust each point in the LineRenderer
+        for (int i = 0; i < positions.Length; i++)
+        {
+            Vector3 rayStart = positions[i] + Vector3.up * 30f;
+            Ray ray = new Ray(rayStart, -Vector3.up);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("DEM")))
+            {
+                // Adjust the y position of the point
+                positions[i].y = hit.point.y + 0.1f;
+            }
+            else
+            {
+                Debug.Log($"Ray from {positions[i]} did not hit the DEM RAHHH.");
+            }
+        }
+        // Re-enable flightline colliders
+        foreach (Collider collider in colliders)
+        {
+            collider.enabled = true;
+        }
+        lineRenderer.SetPositions(positions);
+    }
+
     private void ProcessFlightlines(string flightlineDirectory, GameObject parent)
     {
+        GameObject surfaceDEM = GameObject.Find("/Managers/DataLoader/DEM/surface/default");
+        surfaceDEM.layer = LayerMask.NameToLayer("DEM");
+        MeshCollider demCollider = surfaceDEM.GetComponent<MeshCollider>();
+        if(demCollider == null)
+        {
+            demCollider = surfaceDEM.gameObject.AddComponent<MeshCollider>();
+        }
+
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
         foreach (string segmentFolder in segmentFolders)
         {
@@ -251,6 +305,13 @@ public class DataLoader : MonoBehaviour
                 {
                     // Create LineRenderer for Flightline
                     lineObj = CreateLineRenderer(objFile, segmentContainer);
+                    if(lineObj != null)
+                    {
+                        lineObj.layer = LayerMask.NameToLayer("FlightLines");
+                        //places flightline right above DEM
+                        AdjustFlightline(segmentContainer, demCollider);
+                    }
+
                     UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IlineObj = lineObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
                     IlineObj.interactionLayers = InteractionLayerMask.GetMask("Interactable");
                 }
