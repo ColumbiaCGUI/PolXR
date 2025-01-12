@@ -18,7 +18,7 @@ EditorBuildSettings:
     path: Assets/Scenes/StudyScene.unity
     guid: 3b7a8ba725dbf4ddb808ab52a7ee7875
   - enabled: 0
-    path: Assets/Samples/XR Interaction Toolkit/3.0.7/Starter Assets/DemoScene.unity
+    path: Assets/Scenes/DemoScene.unity
     guid: 319dafa5c80f29f428dc1e0d03f04177
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: b959d621a4b20024ba9dbb895a73a7fa,

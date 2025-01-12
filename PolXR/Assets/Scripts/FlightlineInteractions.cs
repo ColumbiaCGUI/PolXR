@@ -5,73 +5,76 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 public class FlightlineInteractions : MonoBehaviour
 {
-    //private UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable interact;
     private Renderer meshRenderer;
     private UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable interactable;
+    private bool isAlreadySelected = false;
+    private GameObject radargram;
     
     void Awake()
     {
         meshRenderer = GetComponent<Renderer>();
         interactable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
         Collider collider = GetComponent<Collider>();
+        Transform parent = transform.parent;
+        foreach(Transform child in parent)
+        {
+            if(child.name.StartsWith("Data"))
+            {
+                radargram = child.gameObject;
+            }
+        }
         
         if(interactable != null && collider != null)
         {
             interactable.colliders.Add(collider);
+            //to detect when users interact with flightline
             interactable.selectEntered.AddListener(OnSelectEntered);
-            //interactable.selectExited.AddListener(OnSelectExited);
-            Debug.Log($"{gameObject.name}: Adding interaction listeners to {gameObject.name}.");
         }
         else
         {
             Debug.LogError("nothing added RAHH");
         }
     }
-    /*
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            Debug.Log($"Flightline {gameObject.name} was poked by {other.name}");
-            HighlightFlightline();
-        }
-    }
-    */
+
     private void OnSelectEntered(SelectEnterEventArgs args)
     {
-        HighlightFlightline();
+        if(!isAlreadySelected)
+        {
+            SelectFlightline();
+        }
+        else 
+        {
+            DeselectFlightline();
+        }
     }
-    public void HighlightFlightline()
+    public void SelectFlightline()
     {
         if(meshRenderer != null)
         {
             Color highlight = Color.black;
             ColorUtility.TryParseHtmlString("#8BF394", out highlight);
             meshRenderer.material.color = highlight;
-            Transform parent = transform.parent;
-            foreach(Transform child in parent)
-            {
-                if(child.name.StartsWith("Data"))
-                {
-                    child.gameObject.SetActive(true);
-                }
-            }
+            radargram.SetActive(true);
+            isAlreadySelected = true;
         }
-        else {
-            Debug.LogError("NOOOO");
+        else 
+        {
+            Debug.LogError("NO renderer found for flightline");
         }
     }
 
-    public void OnFlightlineDeselected(SelectExitEventArgs args)
+    public void DeselectFlightline()
     {
+        meshRenderer.material.color = Color.black;
+        radargram.SetActive(false);
+        isAlreadySelected = false;
     }
 
     void OnDestroy()
     {
         if (interactable != null)
         {
-            //interact.selectEntered.RemoveListener(OnFlightlineSelected);
-            interactable.selectExited.RemoveListener(OnFlightlineDeselected);
+            interactable.selectEntered.RemoveListener(OnSelectEntered);
         }
     }
 }
