@@ -102,7 +102,7 @@ public class DataLoader : MonoBehaviour
         CenterXROrigin();
 
         //radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
-        radarShader = Resources.Load<Shader>("Shaders/RadarShader");
+        radarShader = Resources.Load<Shader>("Shaders/RadarShader"); //this version works for runtime 
         if (radarShader == null)
         {
             //Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
@@ -229,7 +229,8 @@ public class DataLoader : MonoBehaviour
             }
         }
     }
-
+    
+    //so that flightlines load just above DEM without gaps 
     private void AdjustFlightline(GameObject flightline, MeshCollider demCollider)
     {
         // Get the LineRenderer and its positions
@@ -306,16 +307,13 @@ public class DataLoader : MonoBehaviour
                     lineObj = CreateLineRenderer(objFile, segmentContainer);
                     if(lineObj != null)
                     {
-                        lineObj.layer = LayerMask.NameToLayer("FlightLines");
                         //places flightline right above DEM
                         AdjustFlightline(segmentContainer, demCollider);
-                        // Attach mesh collider for accurate
-                        CreateMeshColliderForFlightline(lineObj);
-                        InteractionLogic script = lineObj.AddComponent<InteractionLogic>();
+                        //potential alternative to generating so many box colliders-- but doesnt work well with interactions
+                        //CreateMeshColliderForFlightline(lineObj);
+                        lineObj.AddComponent<FlightlineInteractions>();
+                        lineObj.tag = "Flightline";
                     }
-
-                    UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IlineObj = lineObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-                    IlineObj.interactionLayers = InteractionLayerMask.GetMask("Interactable");
                 }
                 else if (fileName.StartsWith("Data"))
                 {
@@ -330,6 +328,7 @@ public class DataLoader : MonoBehaviour
                         Transform flightline = segmentContainer.transform.Find("Flightline");
                         if(flightline != null)
                         {
+                            //make sure radargrams spawn on correct flightline locations
                             radarObj.transform.position = flightline.position;
                         }
 
@@ -337,13 +336,6 @@ public class DataLoader : MonoBehaviour
                         Transform meshChild = radarObj.transform.Find("mesh");
                         if (meshChild != null)
                         {
-                            //meshChild.localPosition = Vector3.zero;
-
-                            /*if u want the radargrams to spwan slightly above flightlines:
-                            Vector3 meshPos = meshChild.position;
-                            meshPos.y += 1.0f;
-                            meshChild.position = meshPos;
-                            */
                             MeshRenderer meshRenderer = meshChild.GetComponent<MeshRenderer>();
 
                             if(meshRenderer != null)
@@ -367,19 +359,16 @@ public class DataLoader : MonoBehaviour
                         // Attach the Box Collider
                         radarObj.AddComponent<BoxCollider>();
                         // Attach the Grab Interactable
-                        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IradarObj = radarObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();                       
+                        var grabInteract = radarObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();                       
                         // Add Rotation Constraints for Y Axis Only
-                        IradarObj.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.Instantaneous;
-                        IradarObj.trackPosition = true;
-                        IradarObj.trackRotation = false;
-                        IradarObj.throwOnDetach = false;
-                        IradarObj.matchAttachRotation = false;
-                        IradarObj.interactionLayers = InteractionLayerMask.GetMask("Interactable"); 
+                        grabInteract.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.Instantaneous;
+                        grabInteract.trackPosition = true;
+                        grabInteract.trackRotation = false;
+                        grabInteract.throwOnDetach = false;
+                        grabInteract.matchAttachRotation = false;
                         
                         radarObj.GetComponent<Rigidbody>().useGravity = false;
                         radarObj.GetComponent<Rigidbody>().isKinematic = true;
-                        //radarObj.GetComponent<Rigidbody>().freezeRotation = false;
-                        //GrabTransformerRotationAxisLock LockObj = radarObj.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
 
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarObj.layer = RadarGramLayer;
@@ -403,6 +392,7 @@ public class DataLoader : MonoBehaviour
         return Instantiate(importedObj);
     }
 
+    //potential replacement for box coliders 
     private void CreateMeshColliderForFlightline(GameObject flightline)
     {
         LineRenderer lineRenderer = flightline.GetComponent<LineRenderer>();
@@ -418,20 +408,16 @@ public class DataLoader : MonoBehaviour
         // Attach the mesh collider
         MeshCollider meshCollider = flightline.AddComponent<MeshCollider>();
         meshCollider.sharedMesh = mesh;
-        meshCollider.convex = false;
-        MakeRigidbodyKinematic(flightline);
-    }
-
-    private void MakeRigidbodyKinematic(GameObject flightline)
-    {
+        meshCollider.convex = true;
+        meshCollider.isTrigger = false;
         Rigidbody rb = flightline.GetComponent<Rigidbody>();
-        if (rb == null)
+        if(rb == null) 
         {
             rb = flightline.AddComponent<Rigidbody>();
         }
         rb.isKinematic = true;
-        rb.useGravity = false; 
     }
+
     private Texture2D LoadTexture(string texturePath)
     {
         byte[] fileData = File.ReadAllBytes(texturePath);
@@ -505,7 +491,7 @@ public class DataLoader : MonoBehaviour
             lineRenderer.endWidth = 0.1f;
 
             // Add a MeshCollider to the LineRenderer
-            //AttachBoxColliders(lineObj, rotatedVertices.ToArray());
+            AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
             // Add a click handler
             foreach (Transform child in parentContainer.transform)
@@ -517,8 +503,8 @@ public class DataLoader : MonoBehaviour
                 }
             }
 
-            UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable m_Interactable = lineObj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
-            m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
+            //UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable interactable = lineObj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
+            //interactable.selectEntered.AddListener(TogglePolyline);
 
             return lineObj;
         }
@@ -531,6 +517,7 @@ public class DataLoader : MonoBehaviour
 
     void TogglePolyline(SelectEnterEventArgs args)
     {
+        Debug.Log("event detected!");
         // Actually toggle the polyline
         UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable component = args.interactableObject;
         UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor = args.interactorObject;
@@ -675,7 +662,6 @@ public class DataLoader : MonoBehaviour
                 Math.Max(Mathf.Abs(a.y - b.y), 0.2f),
                 Math.Max(Mathf.Abs(a.z - b.z), 0.2f)
             );
-
             // lineObj.GetComponent<XRSimpleInteractable>().colliders.Add(collider);
         }
     }

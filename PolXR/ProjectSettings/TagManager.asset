@@ -8,6 +8,7 @@ TagManager:
   - Radar Image
   - RoomLight
   - Radargram
+  - Flightline
   layers:
   - Default
   - TransparentFX
