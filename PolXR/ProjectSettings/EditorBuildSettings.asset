@@ -5,21 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/antarctica.unity
-    guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 0
-    path: Assets/Scenes/greenland.unity
-    guid: 59f633de1da7670498ed579da6db9e97
   - enabled: 1
     path: Assets/Scenes/Home.unity
     guid: de0cb7e77de81ba42bb5ba8d3c35123a
-  - enabled: 0
-    path: Assets/Scenes/StudyScene.unity
-    guid: 3b7a8ba725dbf4ddb808ab52a7ee7875
-  - enabled: 0
-    path: Assets/Scenes/DemoScene.unity
-    guid: 319dafa5c80f29f428dc1e0d03f04177
+  - enabled: 1
+    path: Assets/Scenes/Generic.unity
+    guid: ecfe47454c5fe9e428ad4c1ed2c65729
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: b959d621a4b20024ba9dbb895a73a7fa,
       type: 2}
