@@ -144,15 +144,7 @@ public class DataLoader : MonoBehaviour
             // Debug.LogError(flightlineDirectory);
         }
 
-        // Set Toggle Functionality
-        SetTogglesForMenus();
-
-        // Set Button Functionality
-        SetButtonsForMenus();
-
         DisableAllRadarObjects(radarContainer);
-
-        DisableMenus();
     }
 
     private void CenterXROrigin()
