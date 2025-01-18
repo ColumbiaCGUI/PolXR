@@ -25,10 +25,8 @@ public class MinimapFollowUser : MonoBehaviour
         Vector3 newPosition = user.position;
         newPosition.y = transform.position.y;
         transform.position = newPosition;
-        // Calculate new alpha using PingPong for smooth transition
         float alpha = Mathf.PingPong(Time.time * blinkSpeed, maxAlpha - minAlpha) + minAlpha;
 
-        // Apply the new alpha while keeping the original color
         Color newColor = originalColor;
         newColor.a = alpha;
         image.color = newColor;
