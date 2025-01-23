@@ -538,18 +538,6 @@ public class DataLoader : MonoBehaviour
         }
     }
 
-    void ToggleSurfaceDEM(bool arg0)
-    {
-        GameObject surfaceDEM = GameObject.Find("/Managers/DataLoader/DEM/surface");
-        surfaceDEM.SetActive(!surfaceDEM.activeSelf);
-    }
-
-    void ToggleBaseDEM(bool arg0)
-    {
-        GameObject baseDEM = GameObject.Find("/Managers/DataLoader/DEM/bedrock");
-        baseDEM.SetActive(!baseDEM.activeSelf);
-    }
-
     void ToggleFlightlines(bool arg0)
     {
         // TODO
@@ -585,6 +573,7 @@ public class DataLoader : MonoBehaviour
         GameObject.Find("RadarMenu").SetActive(false);
     }
 
+/*
     private void SetTogglesForMenus()
     {
         Toggle radarMenuRadargramToggle = GameObject.Find("RadarMenu/Toggles/Radargram Toggle").GetComponent<Toggle>();
@@ -628,7 +617,7 @@ public class DataLoader : MonoBehaviour
         Button mmLoadScene = GameObject.Find("MainMenu/Buttons/ButtonLoadScene").GetComponent<Button>(); // NOT IMPLEMENTED
         Button mmHomeScreen = GameObject.Find("MainMenu/Buttons/ButtonHomeScreen").GetComponent<Button>(); // NOT IMPLEMENTED
     }
-
+*/
     void DisableMenus()
     {
         GameObject.Find("RadarMenu").SetActive(false);
