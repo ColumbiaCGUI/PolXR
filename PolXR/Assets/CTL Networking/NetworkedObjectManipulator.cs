@@ -76,6 +76,17 @@ public class NetworkedObjectManipulator : XRGrabInteractable
     
     protected override void OnSelectEntered(SelectEnterEventArgs args)
     {
+        StartCoroutine(WaitForStateAuthority());
+
+        IEnumerator WaitForStateAuthority()
+        {
+            while(!_networkObject.HasStateAuthority)
+            {
+                _networkObject.RequestStateAuthority();
+                yield return null;
+            }
+        }
+
         base.OnSelectEntered(args);
         _isGrabbed = true;
         UpdateVisualState(false, true);
@@ -92,6 +103,8 @@ public class NetworkedObjectManipulator : XRGrabInteractable
     
     protected override void OnSelectExited(SelectExitEventArgs args)
     {
+        _networkObject.ReleaseStateAuthoirty();
+        
         base.OnSelectExited(args);
         _isGrabbed = false;
         UpdateVisualState(false, false);
