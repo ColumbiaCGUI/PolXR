@@ -20,7 +20,16 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
     public override NetworkObjectAcquireResult AcquirePrefabInstance(NetworkRunner runner, in NetworkPrefabAcquireContext context, out NetworkObject result)
     {
+        result = null;
+        Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
+        
         radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+        if (radarShader == null)
+        {
+            Debug.LogError("RadarShader not found! Create it or update the path.");
+            return NetworkObjectAcquireResult.Failed;
+        }
+        
         // Detect if this is a custom spawn by its high prefabID value we are passing.
         // The Spawn call will need to pass this value instead of a prefab.
         if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
@@ -61,6 +70,13 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
     {
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
         int index = number - 100000;
+        
+        if (index < 0 || index >= segmentFolders.Length)
+        {
+            Debug.LogError($"Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length-1}");
+            return new GameObject("Invalid Segment");
+        }
+        
         string segmentFolder = segmentFolders[index];
         string segmentName = Path.GetFileName(segmentFolder);
 
