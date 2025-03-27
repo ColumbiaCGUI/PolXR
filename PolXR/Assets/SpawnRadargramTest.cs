@@ -3,86 +3,71 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 
-public class SpawnRadargramTest : MonoBehaviour, INetworkRunnerCallbacks
+public class SpawnRadargramTest : MonoBehaviour
 {
     [SerializeField] private NetworkRunner runner;
-    
+
     // Start is called before the first frame update
     void Start()
     {
-        if (runner != null)
-        {
-            // Check if the NetworkRunner is using BakingObjectProvider
-            var existingProvider = runner.GetComponent<INetworkObjectProvider>();
-            
-            if (existingProvider == null || !(existingProvider is BakingObjectProvider))
-            {
-                Debug.LogWarning("NetworkRunner is not using BakingObjectProvider! Adding one now.");
-                
-                // Remove any existing provider
-                if (existingProvider != null && existingProvider is Component)
-                {
-                    Destroy((Component)existingProvider);
-                }
-                
-                // Add our custom provider
-                runner.gameObject.AddComponent<BakingObjectProvider>();
-            }
-            else
-            {
-                Debug.Log("NetworkRunner is already using BakingObjectProvider");
-            }
-        }
-        
-        // Use coroutine instead of direct call
-        StartCoroutine(DelayedSpawn());
-
-        // Setup event listener
-        if (runner != null)
-        {
-            runner.AddCallbacks(this);
-        }
+        StartCoroutine(WaitForRunner());
     }
 
-    IEnumerator DelayedSpawn()
+    IEnumerator WaitForRunner()
     {
-        Debug.Log("Starting delayed spawn");
+        // Initial delay to let everything initialize
+        yield return new WaitForSeconds(1.0f);
 
-        while(runner.State != NetworkRunner.States.Running)
+        // Wait for runner to be initialized and connected
+        float timeout = 15f;
+        float elapsed = 0f;
+
+        while ((runner == null || runner.State != NetworkRunner.States.Running || !runner.IsRunning) && elapsed < timeout)
         {
-            Debug.Log("Waiting for runner to be running, current state: " + runner.State);
-            yield return new WaitForSeconds(0.2f);
+            Debug.Log($"Waiting for NetworkRunner... Current state: {runner?.State}, IsRunning: {runner?.IsRunning}");
+            yield return new WaitForSeconds(0.5f);
+            elapsed += 0.5f;
         }
-        
-        // Add crucial diagnostic checks
-        if (runner == null) {
-            Debug.LogError("Runner is null!");
-            yield break;
-        }
-        
-        if (runner.State != NetworkRunner.States.Running) {
-            Debug.LogError($"Cannot spawn - NetworkRunner not in Running state! Current state: {runner.State}");
-            yield break;
-        }
-        
-        // Get and validate the provider
-        var provider = runner.GetComponent<BakingObjectProvider>();
-        if (provider != null) {
-            provider.ValidateRunnerState(runner);
-        } else {
-            Debug.LogError("BakingObjectProvider is missing from runner!");
-            yield break;
-        }
-        
-        // Only spawn if everything looks good
-        Debug.Log("Starting delayed spawn");
-        SpawnRadargram(1);
-    }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        if (runner == null || runner.State != NetworkRunner.States.Running || !runner.IsRunning)
+        {
+            Debug.LogError("NetworkRunner failed to reach running state within timeout!");
+            yield break;
+        }
+
+        // Additional check to verify the Runner is valid
+        if (runner.IsRunning)
+        {
+            Debug.Log("NetworkRunner connected and ready to spawn!");
+
+            // Get the provider type
+            var provider = runner.GetComponent<INetworkObjectProvider>();
+            Debug.Log($"Using provider: {provider?.GetType().Name}");
+
+            // Try simple object first
+            try
+            {
+                Debug.Log("Attempting to spawn a simple test object first...");
+
+                // Use a special prefab ID for a test object
+                // 99999 will be handled by the special case in BakingObjectProvider
+                NetworkPrefabId testPrefabId = new NetworkPrefabId() { RawValue = 99999 };
+                var testObj = runner.Spawn(testPrefabId, position: Vector3.zero, rotation: Quaternion.identity);
+
+                Debug.Log($"Spawned test object successfully: {testObj != null}");
+
+                // If test object works, try the radargram
+                SpawnRadargram(1);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Error spawning test object: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+        else
+        {
+            Debug.LogError($"NetworkRunner is not running properly! IsRunning: {runner.IsRunning}");
+        }
     }
 
     public void SpawnRadargram(int segmentIndex)
@@ -93,26 +78,23 @@ public class SpawnRadargramTest : MonoBehaviour, INetworkRunnerCallbacks
             return;
         }
 
+        // Safety check
+        if (!runner.IsRunning)
+        {
+            Debug.LogError("Cannot spawn - NetworkRunner is not running!");
+            return;
+        }
+
+        Debug.Log($"Attempting to spawn radargram with segment index {segmentIndex}...");
+
         // Convert segment index to a custom prefab ID
         // The BakingObjectProvider uses (prefabId - 100000) as the segment folder index
         uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + segmentIndex);
-        
+
         // Use NetworkPrefabId with the raw value
         NetworkPrefabId prefabId = new NetworkPrefabId() { RawValue = customPrefabId };
-        
+
         // Spawn the radargram
         runner.Spawn(prefabId, position: Vector3.zero, rotation: Quaternion.identity);
-    }
-
-    // Implement INetworkRunnerCallbacks
-    public void OnRunnerConnectionStatusChanged(NetworkRunner runner, ConnectionStatus status)
-    {
-        Debug.Log($"Runner status changed: {status}");
-        
-        if (status == ConnectionStatus.Connected)
-        {
-            Debug.Log("NetworkRunner connected and ready to spawn!");
-            SpawnRadargram(1);
-        }
     }
 }

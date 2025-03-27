@@ -20,17 +20,42 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
     public override NetworkObjectAcquireResult AcquirePrefabInstance(NetworkRunner runner, in NetworkPrefabAcquireContext context, out NetworkObject result)
     {
-        ValidateRunnerState(runner);
         result = null;
         Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
-        
+
+        // Special case for ID 99999 - create a simple test cube
+        if (context.PrefabId.RawValue == 99999)
+        {
+            Debug.LogWarning($"Creating simple test cube for ID 99999");
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = "Test Cube";
+            var no = go.AddComponent<NetworkObject>();
+
+            // Baking is required for the NetworkObject to be valid for spawning
+            Baker.Bake(go);
+
+            // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
+            if (context.DontDestroyOnLoad)
+            {
+                runner.MakeDontDestroyOnLoad(go);
+            }
+            else
+            {
+                runner.MoveToRunnerScene(go);
+            }
+
+            // We are finished. Return the NetworkObject and report success.
+            result = no;
+            return NetworkObjectAcquireResult.Success;
+        }
+
         radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
         if (radarShader == null)
         {
             Debug.LogError("RadarShader not found! Create it or update the path.");
             return NetworkObjectAcquireResult.Failed;
         }
-        
+
         // Detect if this is a custom spawn by its high prefabID value we are passing.
         // The Spawn call will need to pass this value instead of a prefab.
         if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
@@ -71,13 +96,13 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
     {
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
         int index = number - 100000;
-        
+
         if (index < 0 || index >= segmentFolders.Length)
         {
-            Debug.LogError($"Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length-1}");
+            Debug.LogError($"Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length - 1}");
             return new GameObject("Invalid Segment");
         }
-        
+
         string segmentFolder = segmentFolders[index];
         string segmentName = Path.GetFileName(segmentFolder);
 
@@ -506,7 +531,8 @@ public class DataLoaderRunner : NetworkBehaviour
         }
     }
 
-    private void flightLineAndRadargram(string flightlineDirectory, GameObject parent, int number) {
+    private void flightLineAndRadargram(string flightlineDirectory, GameObject parent, int number)
+    {
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
         int index = number - 100000;
         string segmentFolder = segmentFolders[index];
