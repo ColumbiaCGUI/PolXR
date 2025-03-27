@@ -30,6 +30,9 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "Test Cube";
             var no = go.AddComponent<NetworkObject>();
+            go.AddComponent<NetworkTransform>();
+            go.AddComponent<NetworkedObjectManipulator>();
+            go.transform.position = new Vector3(190, 0, -60);
 
             // Baking is required for the NetworkObject to be valid for spawning
             Baker.Bake(go);
@@ -67,6 +70,14 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
             var no = go.AddComponent<NetworkObject>();
             go.AddComponent<NetworkedRadargramController>();
             go.AddComponent<NetworkTransform>();
+
+            // Add the NetworkedObjectManipulator component
+            go.AddComponent<NetworkedObjectManipulator>();
+
+            // Set the position to be in front of the XR rig
+            go.transform.position = new Vector3(190, 0, -60);
+
+
             go.name = $"Our Radargram";
 
             // Baking is required for the NetworkObject to be valid for spawning.
