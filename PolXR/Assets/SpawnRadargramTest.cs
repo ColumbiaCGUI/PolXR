@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Fusion;
 
-public class SpawnRadargramTest : MonoBehaviour
+public class SpawnRadargramTest : MonoBehaviour, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner runner;
     
@@ -36,16 +36,45 @@ public class SpawnRadargramTest : MonoBehaviour
         
         // Use coroutine instead of direct call
         StartCoroutine(DelayedSpawn());
+
+        // Setup event listener
+        if (runner != null)
+        {
+            runner.AddCallbacks(this);
+        }
     }
 
     IEnumerator DelayedSpawn()
     {
-        // Wait for 1 frame to ensure Start() methods complete
-        yield return null;
+        Debug.Log("Starting delayed spawn");
+
+        while(runner.State != NetworkRunner.States.Running)
+        {
+            Debug.Log("Waiting for runner to be running, current state: " + runner.State);
+            yield return new WaitForSeconds(0.2f);
+        }
         
-        // Additional safety delay
-        yield return new WaitForSeconds(0.5f);
+        // Add crucial diagnostic checks
+        if (runner == null) {
+            Debug.LogError("Runner is null!");
+            yield break;
+        }
         
+        if (runner.State != NetworkRunner.States.Running) {
+            Debug.LogError($"Cannot spawn - NetworkRunner not in Running state! Current state: {runner.State}");
+            yield break;
+        }
+        
+        // Get and validate the provider
+        var provider = runner.GetComponent<BakingObjectProvider>();
+        if (provider != null) {
+            provider.ValidateRunnerState(runner);
+        } else {
+            Debug.LogError("BakingObjectProvider is missing from runner!");
+            yield break;
+        }
+        
+        // Only spawn if everything looks good
         Debug.Log("Starting delayed spawn");
         SpawnRadargram(1);
     }
@@ -73,5 +102,17 @@ public class SpawnRadargramTest : MonoBehaviour
         
         // Spawn the radargram
         runner.Spawn(prefabId, position: Vector3.zero, rotation: Quaternion.identity);
+    }
+
+    // Implement INetworkRunnerCallbacks
+    public void OnRunnerConnectionStatusChanged(NetworkRunner runner, ConnectionStatus status)
+    {
+        Debug.Log($"Runner status changed: {status}");
+        
+        if (status == ConnectionStatus.Connected)
+        {
+            Debug.Log("NetworkRunner connected and ready to spawn!");
+            SpawnRadargram(1);
+        }
     }
 }

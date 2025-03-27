@@ -17,103 +17,50 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
     private static NetworkObjectBaker _baker;
     private static NetworkObjectBaker Baker => _baker ??= new NetworkObjectBaker();
     private Shader radarShader;
-    
-    private void Start()
-    {
-        Debug.Log("BakingObjectProvider started!");
-    }
 
     public override NetworkObjectAcquireResult AcquirePrefabInstance(NetworkRunner runner, in NetworkPrefabAcquireContext context, out NetworkObject result)
     {
+        ValidateRunnerState(runner);
         result = null;
-        Debug.Log($"[DETAILED] AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
+        Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
         
-        try {
-            radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
-            Debug.Log($"[DETAILED] Shader loaded: {radarShader != null}");
-            
-            if (radarShader == null)
-            {
-                Debug.LogError("[DETAILED] RadarShader not found! Create it or update the path.");
-                return NetworkObjectAcquireResult.Failed;
-            }
-            
-            // Special case for ID 99999 - likely an off-by-one error
-            if (context.PrefabId.RawValue == 99999)
-            {
-                Debug.LogWarning($"Detected prefab ID 99999, redirecting to CUSTOM_PREFAB_FLAG (100000)");
-                
-                // Create a custom prefab ID
-                NetworkPrefabId customPrefabId = new NetworkPrefabId();
-                customPrefabId.RawValue = (uint)CUSTOM_PREFAB_FLAG;
-                
-                // Instead of trying to modify the context directly, handle the logic here
-                var go = FlightLineAndRadargram("Assets/AppData/Flightlines/20100324_01", CUSTOM_PREFAB_FLAG);
-                var no = go.AddComponent<NetworkObject>();
-                go.AddComponent<NetworkedRadargramController>();
-                go.AddComponent<NetworkTransform>();
-                go.name = $"Our Radargram (from 99999)";
-
-                // Baking is required for the NetworkObject to be valid for spawning.
-                Baker.Bake(go);
-
-                // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
-                if (context.DontDestroyOnLoad)
-                {
-                    runner.MakeDontDestroyOnLoad(go);
-                }
-                else
-                {
-                    runner.MoveToRunnerScene(go);
-                }
-
-                // We are finished. Return the NetworkObject and report success.
-                result = no;
-                return NetworkObjectAcquireResult.Success;
-            }
-            
-            // Detect if this is a custom spawn by its high prefabID value we are passing.
-            // The Spawn call will need to pass this value instead of a prefab.
-            if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
-            {
-                Debug.Log($"[DETAILED] Processing custom prefab with ID: {context.PrefabId.RawValue}");
-                
-                var go = FlightLineAndRadargram("Assets/AppData/Flightlines/20100324_01", (int)context.PrefabId.RawValue);
-                Debug.Log($"[DETAILED] FlightLineAndRadargram returned: {go != null}");
-                
-                if (go == null) {
-                    Debug.LogError("[DETAILED] FlightLineAndRadargram returned null GameObject");
-                    return NetworkObjectAcquireResult.Failed;
-                }
-                
-                Debug.Log("[DETAILED] Adding NetworkObject to returned GameObject");
-                var no = go.AddComponent<NetworkObject>();
-                go.AddComponent<NetworkedRadargramController>();
-                go.AddComponent<NetworkTransform>();
-                go.name = $"Our Radargram";
-
-                // Baking is required for the NetworkObject to be valid for spawning.
-                Baker.Bake(go);
-
-                // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
-                // These implementations exist in the INetworkSceneManager assigned to the runner.
-                if (context.DontDestroyOnLoad)
-                {
-                    runner.MakeDontDestroyOnLoad(go);
-                }
-                else
-                {
-                    runner.MoveToRunnerScene(go);
-                }
-
-                // We are finished. Return the NetworkObject and report success.
-                result = no;
-                return NetworkObjectAcquireResult.Success;
-            }
-        }
-        catch (System.Exception ex) {
-            Debug.LogError($"[DETAILED] Exception in AcquirePrefabInstance: {ex.Message}\n{ex.StackTrace}");
+        radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+        if (radarShader == null)
+        {
+            Debug.LogError("RadarShader not found! Create it or update the path.");
             return NetworkObjectAcquireResult.Failed;
+        }
+        
+        // Detect if this is a custom spawn by its high prefabID value we are passing.
+        // The Spawn call will need to pass this value instead of a prefab.
+        if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
+        {
+            var go = FlightLineAndRadargram("Assets/AppData/Flightlines/20100324_01", (int)context.PrefabId.RawValue);
+
+
+            // var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var no = go.AddComponent<NetworkObject>();
+            go.AddComponent<NetworkedRadargramController>();
+            go.AddComponent<NetworkTransform>();
+            go.name = $"Our Radargram";
+
+            // Baking is required for the NetworkObject to be valid for spawning.
+            Baker.Bake(go);
+
+            // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
+            // These implementations exist in the INetworkSceneManager assigned to the runner.
+            if (context.DontDestroyOnLoad)
+            {
+                runner.MakeDontDestroyOnLoad(go);
+            }
+            else
+            {
+                runner.MoveToRunnerScene(go);
+            }
+
+            // We are finished. Return the NetworkObject and report success.
+            result = no;
+            return NetworkObjectAcquireResult.Success;
         }
 
         // For all other spawns, use the default spawning.
@@ -133,8 +80,6 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         
         string segmentFolder = segmentFolders[index];
         string segmentName = Path.GetFileName(segmentFolder);
-
-        Debug.Log($"Trying to spawn segment at index {index}, folder: {segmentName}");
 
         //GameObject segmentContainer = CreateChildGameObject(segmentName, parent.transform);
         GameObject segmentContainer = new GameObject(segmentName);
@@ -162,34 +107,33 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
                 //NetworkObject radarObj = LoadObj(objFile);
                 Debug.Log("FileName starts with data" + fileName);
-                Debug.Log($"OBJ file: {objFile}, has mesh child: {radarObj.transform.Find("mesh") != null}");
                 if (radarObj != null)
                 {
                     ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
                     // Find and texture the Radar object's mesh
                     Transform meshChild = radarObj.transform.Find("mesh");
-
-                    if (meshChild == null)
+                    // CTL
+                    meshChild.gameObject.AddComponent<NetworkObject>();
+                    meshChild.gameObject.AddComponent<NetworkTransform>();
+                    // meshChild.gameObject.AddComponent<NetworkedRadargramController>();
+                    if (meshChild != null)
                     {
-                        Debug.LogWarning($"Creating fallback mesh for {radarObj.name}");
-                        meshChild = new GameObject("mesh").transform;
-                        meshChild.SetParent(radarObj.transform);
-                        meshChild.gameObject.AddComponent<MeshFilter>();
-                        meshChild.gameObject.AddComponent<MeshRenderer>();
+                        string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
+                        if (File.Exists(texturePath))
+                        {
+                            Texture2D texture = LoadTexture(texturePath);
+                            Material material = CreateRadarMaterial(texture);
+                            ApplyMaterial(meshChild.gameObject, material);
+                        }
                     }
-                    
-                    // REMOVE NETWORK COMPONENTS FROM CHILD - DON'T ADD NESTED NETWORK OBJECTS
-                    // meshChild.gameObject.AddComponent<NetworkObject>();
-                    // meshChild.gameObject.AddComponent<NetworkTransform>();
-
-                    string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
-                    if (File.Exists(texturePath))
+                    else
                     {
-                        Texture2D texture = LoadTexture(texturePath);
-                        Material material = CreateRadarMaterial(texture);
-                        ApplyMaterial(meshChild.gameObject, material);
+                        Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
                     }
+
+                    // Parent the Radar object to the segment container
+                    radarObj.transform.SetParent(segmentContainer.transform);
 
                     // Add necessary components to the Radar object
                     //radarObj.AddComponent<ConstraintManager>();
@@ -207,6 +151,15 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         }
         return segmentContainer;
     }
+
+    public void ValidateRunnerState(NetworkRunner runner)
+    {
+        Debug.Log($"Runner State: {runner.State}");
+        Debug.Log($"Is SceneAuthority: {runner.IsSceneAuthority}");
+        Debug.Log($"Has provider: {runner.GetComponent<INetworkObjectProvider>() != null}");
+        Debug.Log($"Runner gameObject active: {runner.gameObject.activeInHierarchy}");
+    }
+
 
     private GameObject LoadObj(string objPath)
     //private NetworkObject LoadObj(string objPath)
@@ -582,21 +535,36 @@ public class DataLoaderRunner : NetworkBehaviour
 
                 //NetworkObject radarObj = LoadObj(objFile);
                 Debug.Log("FileName starts with data" + fileName);
-                Debug.Log($"OBJ file: {objFile}, has mesh child: {radarObj.transform.Find("mesh") != null}");
                 if (radarObj != null)
                 {
                     ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
                     // Find and texture the Radar object's mesh
                     Transform meshChild = radarObj.transform.Find("mesh");
-                    if (meshChild == null)
+                    if (meshChild != null)
                     {
-                        Debug.LogWarning($"Creating fallback mesh for {radarObj.name}");
-                        meshChild = new GameObject("mesh").transform;
-                        meshChild.SetParent(radarObj.transform);
-                        meshChild.gameObject.AddComponent<MeshFilter>();
-                        meshChild.gameObject.AddComponent<MeshRenderer>();
+                        string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
+                        if (File.Exists(texturePath))
+                        {
+                            Texture2D texture = LoadTexture(texturePath);
+                            Material material = CreateRadarMaterial(texture);
+                            ApplyMaterial(meshChild.gameObject, material);
+                        }
                     }
+                    else
+                    {
+                        Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
+                    }
+
+                    // Parent the Radar object to the segment container
+                    radarObj.transform.SetParent(segmentContainer.transform);
+
+                    // Add necessary components to the Radar object
+                    //radarObj.AddComponent<ConstraintManager>();
+                    //radarObj.AddComponent<BoundsControl>();
+                    //radarObj.AddComponent<NearInteractionGrabbable>();
+                    //radarObj.AddComponent<Microsoft.MixedReality.Toolkit.UI.ObjectManipulator>();
+                    //radarObj.AddComponent<RotationAxisConstraint>();
 
                     // Add necessary components to the parent segment container
                     segmentContainer.AddComponent<BoxCollider>();
@@ -641,21 +609,36 @@ public class DataLoaderRunner : NetworkBehaviour
 
                     //NetworkObject radarObj = LoadObj(objFile);
                     Debug.Log("FileName starts with data" + fileName);
-                    Debug.Log($"OBJ file: {objFile}, has mesh child: {radarObj.transform.Find("mesh") != null}");
                     if (radarObj != null)
                     {
                         ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
                         // Find and texture the Radar object's mesh
                         Transform meshChild = radarObj.transform.Find("mesh");
-                        if (meshChild == null)
+                        if (meshChild != null)
                         {
-                            Debug.LogWarning($"Creating fallback mesh for {radarObj.name}");
-                            meshChild = new GameObject("mesh").transform;
-                            meshChild.SetParent(radarObj.transform);
-                            meshChild.gameObject.AddComponent<MeshFilter>();
-                            meshChild.gameObject.AddComponent<MeshRenderer>();
+                            string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
+                            if (File.Exists(texturePath))
+                            {
+                                Texture2D texture = LoadTexture(texturePath);
+                                Material material = CreateRadarMaterial(texture);
+                                ApplyMaterial(meshChild.gameObject, material);
+                            }
                         }
+                        else
+                        {
+                            Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
+                        }
+
+                        // Parent the Radar object to the segment container
+                        radarObj.transform.SetParent(segmentContainer.transform);
+
+                        // Add necessary components to the Radar object
+                        //radarObj.AddComponent<ConstraintManager>();
+                        //radarObj.AddComponent<BoundsControl>();
+                        //radarObj.AddComponent<NearInteractionGrabbable>();
+                        //radarObj.AddComponent<Microsoft.MixedReality.Toolkit.UI.ObjectManipulator>();
+                        //radarObj.AddComponent<RotationAxisConstraint>();
 
                         // Add necessary components to the parent segment container
                         segmentContainer.AddComponent<BoxCollider>();
