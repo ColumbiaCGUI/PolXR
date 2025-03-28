@@ -21,108 +21,91 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
     public override NetworkObjectAcquireResult AcquirePrefabInstance(NetworkRunner runner, in NetworkPrefabAcquireContext context, out NetworkObject result)
     {
         result = null;
-        Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
-
-        // Special case for ID 99999 - create a simple test cube
-        // if (context.PrefabId.RawValue == 99999)
-        // {
-        //     Debug.LogWarning($"Creating simple test cube for ID 99999");
-        //     var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        //     go.name = "Test Cube";
-        //     var no = go.AddComponent<NetworkObject>();
-        //     go.AddComponent<NetworkTransform>();
-        //     go.AddComponent<NetworkedObjectManipulator>();
-        //     go.transform.position = new Vector3(190, 0, -60);
-
-        //     // Baking is required for the NetworkObject to be valid for spawning
-        //     Baker.Bake(go);
-
-        //     // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
-        //     if (context.DontDestroyOnLoad)
-        //     {
-        //         runner.MakeDontDestroyOnLoad(go);
-        //     }
-        //     else
-        //     {
-        //         runner.MoveToRunnerScene(go);
-        //     }
-
-        //     // We are finished. Return the NetworkObject and report success.
-        //     result = no;
-        //     return NetworkObjectAcquireResult.Success;
-        // }
-
-        radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
-        if (radarShader == null)
+        try 
         {
-            Debug.LogError("RadarShader not found! Create it or update the path.");
-            return NetworkObjectAcquireResult.Failed;
+            Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
+            
+            string flightlineDir = "Assets/AppData/Flightlines/20100324_01";
+            Debug.Log($"Checking directory: {flightlineDir}");
+            Debug.Log($"Directory exists: {Directory.Exists(flightlineDir)}");
+            
+            if (radarShader == null)
+            {
+                Debug.LogError("RadarShader is null!");
+                return NetworkObjectAcquireResult.Failed;
+            }
+
+            if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
+            {
+                var go = FlightLineAndRadargram(flightlineDir, (int)context.PrefabId.RawValue);
+                if (go == null)
+                {
+                    Debug.LogError("FlightLineAndRadargram returned null");
+                    return NetworkObjectAcquireResult.Failed;
+                }
+                
+                Debug.Log($"Created GameObject: {go.name}, Active: {go.activeInHierarchy}");
+                
+                // Ensure the GameObject is active
+                go.SetActive(true);
+                
+                // Make sure the NetworkObject is added and baked BEFORE adding other components
+                var no = go.AddComponent<NetworkObject>();
+                Baker.Bake(go);
+                
+                // Add other components after baking
+                go.AddComponent<NetworkedRadargramController>();
+                go.AddComponent<NetworkTransform>();
+                go.AddComponent<NetworkedObjectManipulator>();
+                
+                // Set the position to be in front of the XR rig
+                go.transform.position = new Vector3(190, 0, -60);
+
+                go.name = $"Our Radargram";
+                
+                // Move the object to the runner scene
+                if (context.DontDestroyOnLoad)
+                {
+                    runner.MakeDontDestroyOnLoad(go);
+                }
+                else
+                {
+                    runner.MoveToRunnerScene(go);
+                }
+                
+                result = no;
+                if (!result.IsValid)
+                {
+                    Debug.LogError("NetworkObject is not valid after creation");
+                    return NetworkObjectAcquireResult.Failed;
+                }
+                return NetworkObjectAcquireResult.Success;
+            }
         }
-
-        // Detect if this is a custom spawn by its high prefabID value we are passing.
-        // The Spawn call will need to pass this value instead of a prefab.
-        if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
+        catch (Exception ex)
         {
-            Debug.Log($"Creating object for PrefabId: {context.PrefabId.RawValue}");
-            var go = FlightLineAndRadargram("Assets/AppData/Flightlines/20100324_01", (int)context.PrefabId.RawValue);
-            
-            if (go == null)
-            {
-                Debug.LogError("FlightLineAndRadargram returned null");
-                return NetworkObjectAcquireResult.Failed;
-            }
-            
-            Debug.Log($"Created GameObject: {go.name}, Active: {go.activeInHierarchy}");
-            
-            // Ensure the GameObject is active
-            go.SetActive(true);
-            
-            // Make sure the NetworkObject is added and baked BEFORE adding other components
-            var no = go.AddComponent<NetworkObject>();
-            Baker.Bake(go);
-            
-            // Add other components after baking
-            go.AddComponent<NetworkedRadargramController>();
-            go.AddComponent<NetworkTransform>();
-            go.AddComponent<NetworkedObjectManipulator>();
-            
-            // Set the position to be in front of the XR rig
-            go.transform.position = new Vector3(190, 0, -60);
-
-            go.name = $"Our Radargram";
-            
-            // Move the object to the runner scene
-            if (context.DontDestroyOnLoad)
-            {
-                runner.MakeDontDestroyOnLoad(go);
-            }
-            else
-            {
-                runner.MoveToRunnerScene(go);
-            }
-            
-            result = no;
-            if (!result.IsValid)
-            {
-                Debug.LogError("NetworkObject is not valid after creation");
-                return NetworkObjectAcquireResult.Failed;
-            }
-            return NetworkObjectAcquireResult.Success;
+            Debug.LogError($"Exception in AcquirePrefabInstance: {ex.Message}\nStack trace: {ex.StackTrace}");
+            return NetworkObjectAcquireResult.Failed;
         }
 
         // For all other spawns, use the default spawning.
         return base.AcquirePrefabInstance(runner, context, out result);
     }
 
-    private GameObject FlightLineAndRadargram(string flightlineDirectory, /*GameObject parent,*/ int number)
+    private GameObject FlightLineAndRadargram(string flightlineDirectory, int number)
     {
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
-        int index = number - 100000;
+        if (segmentFolders == null || segmentFolders.Length == 0)
+        {
+            Debug.LogError($"No segment folders found in {flightlineDirectory}");
+            return null;
+        }
 
+        int index = number - 100000;
         if (index < 0 || index >= segmentFolders.Length)
         {
             Debug.LogError($"Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length - 1}");
-            return new GameObject("Invalid Segment");
+            return null;
         }
 
         string segmentFolder = segmentFolders[index];
