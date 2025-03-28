@@ -185,6 +185,11 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 }
             }
         }
+
+        // Add NetworkObject to the container and bake it
+        var no = segmentContainer.AddComponent<NetworkObject>();
+        Baker.Bake(segmentContainer);
+
         return segmentContainer;
     }
 
