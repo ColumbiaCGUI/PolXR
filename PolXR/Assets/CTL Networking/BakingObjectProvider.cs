@@ -63,28 +63,35 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         // The Spawn call will need to pass this value instead of a prefab.
         if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
         {
+            Debug.Log($"Creating object for PrefabId: {context.PrefabId.RawValue}");
             var go = FlightLineAndRadargram("Assets/AppData/Flightlines/20100324_01", (int)context.PrefabId.RawValue);
-
-
-            // var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            
+            if (go == null)
+            {
+                Debug.LogError("FlightLineAndRadargram returned null");
+                return NetworkObjectAcquireResult.Failed;
+            }
+            
+            Debug.Log($"Created GameObject: {go.name}, Active: {go.activeInHierarchy}");
+            
+            // Ensure the GameObject is active
+            go.SetActive(true);
+            
+            // Make sure the NetworkObject is added and baked BEFORE adding other components
             var no = go.AddComponent<NetworkObject>();
+            Baker.Bake(go);
+            
+            // Add other components after baking
             go.AddComponent<NetworkedRadargramController>();
             go.AddComponent<NetworkTransform>();
-
-            // Add the NetworkedObjectManipulator component
             go.AddComponent<NetworkedObjectManipulator>();
-
+            
             // Set the position to be in front of the XR rig
             go.transform.position = new Vector3(190, 0, -60);
 
-
             go.name = $"Our Radargram";
-
-            // Baking is required for the NetworkObject to be valid for spawning.
-            Baker.Bake(go);
-
-            // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
-            // These implementations exist in the INetworkSceneManager assigned to the runner.
+            
+            // Move the object to the runner scene
             if (context.DontDestroyOnLoad)
             {
                 runner.MakeDontDestroyOnLoad(go);
@@ -93,9 +100,13 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
             {
                 runner.MoveToRunnerScene(go);
             }
-
-            // We are finished. Return the NetworkObject and report success.
+            
             result = no;
+            if (!result.IsValid)
+            {
+                Debug.LogError("NetworkObject is not valid after creation");
+                return NetworkObjectAcquireResult.Failed;
+            }
             return NetworkObjectAcquireResult.Success;
         }
 
