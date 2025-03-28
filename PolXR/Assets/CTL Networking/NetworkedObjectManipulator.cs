@@ -9,7 +9,7 @@ using System;
 [RequireComponent(typeof(NetworkObject))]
 public class NetworkedObjectManipulator : XRGrabInteractable
 {
-    private NetworkObject _networkObject;
+    [SerializeField] private NetworkObject _networkObject;
     private NetworkTransform _networkTransform;
     private Rigidbody _rigidbody;
     private NetworkRunner _runner;

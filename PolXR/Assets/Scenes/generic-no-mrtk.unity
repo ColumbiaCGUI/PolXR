@@ -1077,6 +1077,7 @@ MonoBehaviour:
   m_StartingSingleGrabTransformers: []
   m_StartingMultipleGrabTransformers: []
   m_AddDefaultGrabTransformers: 1
+  _networkObject: {fileID: 1196559165}
   _defaultColor: {r: 1, g: 1, b: 1, a: 1}
   _hoverColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   _grabColor: {r: 0, g: 1, b: 0, a: 1}
