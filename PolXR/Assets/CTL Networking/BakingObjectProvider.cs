@@ -24,33 +24,33 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
 
         // Special case for ID 99999 - create a simple test cube
-        if (context.PrefabId.RawValue == 99999)
-        {
-            Debug.LogWarning($"Creating simple test cube for ID 99999");
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            go.name = "Test Cube";
-            var no = go.AddComponent<NetworkObject>();
-            go.AddComponent<NetworkTransform>();
-            go.AddComponent<NetworkedObjectManipulator>();
-            go.transform.position = new Vector3(190, 0, -60);
+        // if (context.PrefabId.RawValue == 99999)
+        // {
+        //     Debug.LogWarning($"Creating simple test cube for ID 99999");
+        //     var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        //     go.name = "Test Cube";
+        //     var no = go.AddComponent<NetworkObject>();
+        //     go.AddComponent<NetworkTransform>();
+        //     go.AddComponent<NetworkedObjectManipulator>();
+        //     go.transform.position = new Vector3(190, 0, -60);
 
-            // Baking is required for the NetworkObject to be valid for spawning
-            Baker.Bake(go);
+        //     // Baking is required for the NetworkObject to be valid for spawning
+        //     Baker.Bake(go);
 
-            // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
-            if (context.DontDestroyOnLoad)
-            {
-                runner.MakeDontDestroyOnLoad(go);
-            }
-            else
-            {
-                runner.MoveToRunnerScene(go);
-            }
+        //     // Move the object to the applicable Runner Scene/PhysicsScene/DontDestroyOnLoad
+        //     if (context.DontDestroyOnLoad)
+        //     {
+        //         runner.MakeDontDestroyOnLoad(go);
+        //     }
+        //     else
+        //     {
+        //         runner.MoveToRunnerScene(go);
+        //     }
 
-            // We are finished. Return the NetworkObject and report success.
-            result = no;
-            return NetworkObjectAcquireResult.Success;
-        }
+        //     // We are finished. Return the NetworkObject and report success.
+        //     result = no;
+        //     return NetworkObjectAcquireResult.Success;
+        // }
 
         radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
         if (radarShader == null)

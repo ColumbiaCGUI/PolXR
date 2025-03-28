@@ -51,10 +51,10 @@ public class SpawnRadargramTest : MonoBehaviour
 
                 // Use a special prefab ID for a test object
                 // 99999 will be handled by the special case in BakingObjectProvider
-                NetworkPrefabId testPrefabId = new NetworkPrefabId() { RawValue = 99999 };
-                var testObj = runner.Spawn(testPrefabId, position: Vector3.zero, rotation: Quaternion.identity);
+                // NetworkPrefabId testPrefabId = new NetworkPrefabId() { RawValue = 99999 };
+                // var testObj = runner.Spawn(testPrefabId, position: Vector3.zero, rotation: Quaternion.identity);
 
-                Debug.Log($"Spawned test object successfully: {testObj != null}");
+                // Debug.Log($"Spawned test object successfully: {testObj != null}");
 
                 // If test object works, try the radargram
                 SpawnRadargram(1);
