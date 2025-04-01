@@ -21,49 +21,77 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
     public override NetworkObjectAcquireResult AcquirePrefabInstance(NetworkRunner runner, in NetworkPrefabAcquireContext context, out NetworkObject result)
     {
         result = null;
-        try 
+        try
         {
             Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
-            
-            string flightlineDir = "Assets/AppData/Flightlines/20100324_01";
-            Debug.Log($"Checking directory: {flightlineDir}");
-            Debug.Log($"Directory exists: {Directory.Exists(flightlineDir)}");
-            
-            if (radarShader == null)
+
+            // Validate runner state first
+            if (runner == null || !runner.IsRunning)
             {
-                Debug.LogError("RadarShader is null!");
+                Debug.LogError($"NetworkRunner is not valid or not running. Runner null: {runner == null}, IsRunning: {runner?.IsRunning}");
                 return NetworkObjectAcquireResult.Failed;
             }
 
+            Debug.Log($"NetworkRunner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
+
+            // Load the RadarShader
+            radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+            if (radarShader == null)
+            {
+                Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
+                return NetworkObjectAcquireResult.Failed;
+            }
+
+            string flightlineDir = "Assets/AppData/Flightlines/20100324_01";
+            Debug.Log($"Checking directory: {flightlineDir}");
+            Debug.Log($"Directory exists: {Directory.Exists(flightlineDir)}");
+
             if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
             {
+                // 1. Create base GameObject with all non-network structure
                 var go = FlightLineAndRadargram(flightlineDir, (int)context.PrefabId.RawValue);
                 if (go == null)
                 {
                     Debug.LogError("FlightLineAndRadargram returned null");
                     return NetworkObjectAcquireResult.Failed;
                 }
-                
-                Debug.Log($"Created GameObject: {go.name}, Active: {go.activeInHierarchy}");
-                
-                // Ensure the GameObject is active
-                go.SetActive(true);
-                
-                // Make sure the NetworkObject is added and baked BEFORE adding other components
-                var no = go.AddComponent<NetworkObject>();
-                Baker.Bake(go);
-                
-                // Add other components after baking
-                go.AddComponent<NetworkedRadargramController>();
-                go.AddComponent<NetworkTransform>();
-                go.AddComponent<NetworkedObjectManipulator>();
-                
-                // Set the position to be in front of the XR rig
-                go.transform.position = new Vector3(190, 0, -60);
 
+                // Set initial transform and name
+                go.transform.position = new Vector3(190, 0, -60);
                 go.name = $"Our Radargram";
-                
-                // Move the object to the runner scene
+                go.SetActive(true);
+
+                // 2. Add NetworkObject component
+                var no = go.AddComponent<NetworkObject>();
+                if (no == null)
+                {
+                    Debug.LogError("Failed to add NetworkObject component");
+                    return NetworkObjectAcquireResult.Failed;
+                }
+
+                // 3. Add all NetworkBehaviours
+                var networkedController = go.AddComponent<NetworkedRadargramController>();
+                var networkTransform = go.AddComponent<NetworkTransform>();
+                var objectManipulator = go.AddComponent<NetworkedObjectManipulator>();
+
+                if (networkedController == null || networkTransform == null || objectManipulator == null)
+                {
+                    Debug.LogError("Failed to add one or more network components");
+                    return NetworkObjectAcquireResult.Failed;
+                }
+
+                // 4. Bake LAST - after ALL changes to Network Object structure
+                Debug.Log($"About to bake NetworkObject. Current state - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}, Scene: {go.scene.name}, Active: {go.activeInHierarchy}");
+                var bakeResult = Baker.Bake(go);
+                Debug.Log($"Bake result alksjdlfadksf: {bakeResult}, NetworkObject after bake - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}");
+
+                // if (!no.IsValid)
+                // {
+                //     Debug.LogError($"NetworkObject not valid after bake. Scene: {go.scene.name}, Active: {go.activeInHierarchy}, Parent: {go.transform.parent?.name}, Runner State: {runner.State}");
+                //     return NetworkObjectAcquireResult.Failed;
+                // }
+
+                // Only move to runner scene after successful bake and complete setup
                 if (context.DontDestroyOnLoad)
                 {
                     runner.MakeDontDestroyOnLoad(go);
@@ -72,13 +100,11 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 {
                     runner.MoveToRunnerScene(go);
                 }
-                
+
+                Debug.Log($"Final state - Scene: {go.scene.name}, Active: {go.activeInHierarchy}, NetworkObject valid: {no.IsValid}");
+
+                // 5. Return the NetworkObject instance as the result
                 result = no;
-                if (!result.IsValid)
-                {
-                    Debug.LogError("NetworkObject is not valid after creation");
-                    return NetworkObjectAcquireResult.Failed;
-                }
                 return NetworkObjectAcquireResult.Success;
             }
         }
@@ -88,7 +114,6 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
             return NetworkObjectAcquireResult.Failed;
         }
 
-        // For all other spawns, use the default spawning.
         return base.AcquirePrefabInstance(runner, context, out result);
     }
 
@@ -101,7 +126,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
             return null;
         }
 
-        int index = number - 100000;
+        int index = number - CUSTOM_PREFAB_FLAG;
         if (index < 0 || index >= segmentFolders.Length)
         {
             Debug.LogError($"Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length - 1}");
@@ -111,42 +136,27 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         string segmentFolder = segmentFolders[index];
         string segmentName = Path.GetFileName(segmentFolder);
 
-        //GameObject segmentContainer = CreateChildGameObject(segmentName, parent.transform);
+        // Create base container without any network components
         GameObject segmentContainer = new GameObject(segmentName);
+
+        // Process all .obj files in this segment
         string[] objFiles = Directory.GetFiles(segmentFolder, "*.obj");
         foreach (string objFile in objFiles)
         {
             string fileName = Path.GetFileName(objFile);
-            GameObject lineObj = null;
 
             if (fileName.StartsWith("FlightLine"))
             {
-                // Create LineRenderer for Flightline
-                lineObj = CreateLineRenderer(objFile, segmentContainer);
+                CreateLineRenderer(objFile, segmentContainer);
             }
             else if (fileName.StartsWith("Data"))
             {
                 GameObject radarObj = LoadObj(objFile);
-                radarObj.AddComponent<NetworkObject>();
-                radarObj.AddComponent<NetworkTransform>();
-
-                //GameObject radarObjLocal = LoadObj(objFile);
-                //radarObjLocal.AddComponent<NetworkObject>();
-                //NetworkObject radarObj = runner.Spawn(radarObjLocal);
-
-
-                //NetworkObject radarObj = LoadObj(objFile);
-                Debug.Log("FileName starts with data" + fileName);
                 if (radarObj != null)
                 {
                     ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
-                    // Find and texture the Radar object's mesh
                     Transform meshChild = radarObj.transform.Find("mesh");
-                    // CTL
-                    meshChild.gameObject.AddComponent<NetworkObject>();
-                    meshChild.gameObject.AddComponent<NetworkTransform>();
-                    // meshChild.gameObject.AddComponent<NetworkedRadargramController>();
                     if (meshChild != null)
                     {
                         string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
@@ -157,32 +167,15 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                             ApplyMaterial(meshChild.gameObject, material);
                         }
                     }
-                    else
-                    {
-                        Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
-                    }
 
-                    // Parent the Radar object to the segment container
                     radarObj.transform.SetParent(segmentContainer.transform);
-
-                    // Add necessary components to the Radar object
-                    //radarObj.AddComponent<ConstraintManager>();
-                    //radarObj.AddComponent<BoundsControl>();
-                    //radarObj.AddComponent<NearInteractionGrabbable>();
-                    //radarObj.AddComponent<Microsoft.MixedReality.Toolkit.UI.ObjectManipulator>();
-                    //radarObj.AddComponent<RotationAxisConstraint>();
-
-                    // Add necessary components to the parent segment container
-                    segmentContainer.AddComponent<BoxCollider>();
-                    //segmentContainer.AddComponent<ConstraintManager>();
-                    segmentContainer.AddComponent<MyRadarEvents>();
                 }
             }
         }
 
-        // Add NetworkObject to the container and bake it
-        var no = segmentContainer.AddComponent<NetworkObject>();
-        Baker.Bake(segmentContainer);
+        // Add only non-network components
+        segmentContainer.AddComponent<BoxCollider>();
+        segmentContainer.AddComponent<MyRadarEvents>();
 
         return segmentContainer;
     }

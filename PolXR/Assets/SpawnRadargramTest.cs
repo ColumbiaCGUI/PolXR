@@ -6,8 +6,8 @@ using Fusion;
 public class SpawnRadargramTest : MonoBehaviour
 {
     [SerializeField] private NetworkRunner runner;
+    private BakingObjectProvider provider;
 
-    // Start is called before the first frame update
     void Start()
     {
         StartCoroutine(WaitForRunner());
@@ -35,66 +35,82 @@ public class SpawnRadargramTest : MonoBehaviour
             yield break;
         }
 
-        // Additional check to verify the Runner is valid
+        // Get and validate the provider
+        provider = runner.GetComponent<BakingObjectProvider>();
+        if (provider == null)
+        {
+            Debug.LogError("BakingObjectProvider not found on NetworkRunner!");
+            yield break;
+        }
+
+        // Check if Runner is valid
         if (runner.IsRunning)
         {
-            Debug.Log("NetworkRunner connected and ready to spawn!");
+            Debug.Log($"NetworkRunner connected and ready! State: {runner.State}");
 
-            // Get the provider type
-            var provider = runner.GetComponent<INetworkObjectProvider>();
-            Debug.Log($"Using provider: {provider?.GetType().Name}");
-
-            // Try simple object first
             try
             {
-                Debug.Log("Attempting to spawn a simple test object first...");
-
-                // Use a special prefab ID for a test object
-                // 99999 will be handled by the special case in BakingObjectProvider
-                // NetworkPrefabId testPrefabId = new NetworkPrefabId() { RawValue = 99999 };
-                // var testObj = runner.Spawn(testPrefabId, position: Vector3.zero, rotation: Quaternion.identity);
-
-                // Debug.Log($"Spawned test object successfully: {testObj != null}");
-
-                // If test object works, try the radargram
+                provider.ValidateRunnerState(runner);
                 SpawnRadargram(1);
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"Error spawning test object: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"Error during spawn attempt: {ex.Message}\n{ex.StackTrace}");
             }
         }
         else
         {
-            Debug.LogError($"NetworkRunner is not running properly! IsRunning: {runner.IsRunning}");
+            Debug.LogError($"NetworkRunner is not properly initialized! State: {runner.State}");
         }
     }
 
     public void SpawnRadargram(int segmentIndex)
     {
-        if (runner == null)
+        if (runner == null || !runner.IsRunning)
         {
-            Debug.LogError("NetworkRunner reference is missing!");
+            Debug.LogError($"Cannot spawn - NetworkRunner invalid! IsNull: {runner == null}, IsRunning: {runner?.IsRunning}");
             return;
         }
 
-        // Safety check
-        if (!runner.IsRunning)
+        if (provider == null)
         {
-            Debug.LogError("Cannot spawn - NetworkRunner is not running!");
+            Debug.LogError("BakingObjectProvider not found!");
             return;
         }
 
         Debug.Log($"Attempting to spawn radargram with segment index {segmentIndex}...");
+        Debug.Log($"Runner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
 
-        // Convert segment index to a custom prefab ID
-        // The BakingObjectProvider uses (prefabId - 100000) as the segment folder index
-        uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + segmentIndex);
+        try
+        {
+            // Convert segment index to a custom prefab ID
+            uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + segmentIndex);
+            NetworkPrefabId prefabId = new NetworkPrefabId() { RawValue = customPrefabId };
 
-        // Use NetworkPrefabId with the raw value
-        NetworkPrefabId prefabId = new NetworkPrefabId() { RawValue = customPrefabId };
+            // Spawn with more detailed options
+            var spawnedObj = runner.Spawn(
+                prefabId,
+                position: Vector3.zero,
+                rotation: Quaternion.identity,
+                inputAuthority: runner.LocalPlayer,
+                onBeforeSpawned: (runner, obj) =>
+                {
+                    Debug.Log($"Before spawn callback - Object: {obj.name}, Has NetworkObject: {obj.GetComponent<NetworkObject>() != null}");
+                }
+            );
 
-        // Spawn the radargram
-        runner.Spawn(prefabId, position: Vector3.zero, rotation: Quaternion.identity);
+            if (spawnedObj != null)
+            {
+                Debug.Log($"Successfully spawned radargram! NetworkObject valid: {spawnedObj.IsValid}, ID: {spawnedObj.Id}");
+            }
+            else
+            {
+                Debug.LogError("Spawn returned null object!");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Error during spawn: {ex.Message}\n{ex.StackTrace}");
+        }
     }
 }
