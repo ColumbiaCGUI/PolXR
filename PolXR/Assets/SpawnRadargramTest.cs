@@ -86,6 +86,15 @@ public class SpawnRadargramTest : MonoBehaviour
             uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + segmentIndex);
             NetworkPrefabId prefabId = new NetworkPrefabId() { RawValue = customPrefabId };
 
+            // Check if we already have a spawned object with this ID
+            var existingName = $"Our Radargram_{customPrefabId}";
+            var existingObj = GameObject.Find(existingName);
+            if (existingObj != null)
+            {
+                Debug.LogWarning($"Object {existingName} already exists in scene. Skipping spawn.");
+                return;
+            }
+
             // In shared mode, we use state authority for the spawning peer
             var spawnedObj = runner.Spawn(
                 prefabId,

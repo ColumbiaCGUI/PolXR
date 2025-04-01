@@ -48,6 +48,23 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
             if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
             {
+                // Check if an object with this name already exists in the scene
+                var existingObj = GameObject.Find("Our Radargram");
+                if (existingObj != null)
+                {
+                    Debug.LogWarning($"Object 'Our Radargram' already exists in scene. Attempting to use existing object.");
+                    var existingNo = existingObj.GetComponent<NetworkObject>();
+                    if (existingNo != null && existingNo.IsValid)
+                    {
+                        result = existingNo;
+                        return NetworkObjectAcquireResult.Success;
+                    }
+                    else
+                    {
+                        GameObject.Destroy(existingObj);
+                    }
+                }
+
                 // 1. Create base GameObject with all non-network structure
                 var go = FlightLineAndRadargram(flightlineDir, (int)context.PrefabId.RawValue);
                 if (go == null)
@@ -56,9 +73,9 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                     return NetworkObjectAcquireResult.Failed;
                 }
 
-                // Set initial transform and name
+                // Generate a unique name using the context ID
+                go.name = $"Our Radargram_{context.PrefabId.RawValue}";
                 go.transform.position = new Vector3(190, 0, -60);
-                go.name = $"Our Radargram";
                 go.SetActive(true);
 
                 // 2. Add NetworkObject component first
