@@ -83,25 +83,29 @@ public class SpawnRadargramTest : MonoBehaviour
 
         try
         {
-            // Convert segment index to a custom prefab ID
             uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + segmentIndex);
             NetworkPrefabId prefabId = new NetworkPrefabId() { RawValue = customPrefabId };
 
-            // Spawn with more detailed options
+            // In shared mode, we use state authority for the spawning peer
             var spawnedObj = runner.Spawn(
                 prefabId,
                 position: Vector3.zero,
                 rotation: Quaternion.identity,
-                inputAuthority: runner.LocalPlayer,
                 onBeforeSpawned: (runner, obj) =>
                 {
-                    Debug.Log($"Before spawn callback - Object: {obj.name}, Has NetworkObject: {obj.GetComponent<NetworkObject>() != null}");
+                    Debug.Log($"Spawning shared object: {obj.name}");
+                    var no = obj.GetComponent<NetworkObject>();
+                    if (no != null)
+                    {
+                        // Ensure we have state authority for initial setup
+                        no.RequestStateAuthority();
+                    }
                 }
             );
 
             if (spawnedObj != null)
             {
-                Debug.Log($"Successfully spawned radargram! NetworkObject valid: {spawnedObj.IsValid}, ID: {spawnedObj.Id}");
+                Debug.Log($"Successfully spawned shared radargram! NetworkObject valid: {spawnedObj.IsValid}, ID: {spawnedObj.Id}, HasStateAuthority: {spawnedObj.HasStateAuthority}");
             }
             else
             {

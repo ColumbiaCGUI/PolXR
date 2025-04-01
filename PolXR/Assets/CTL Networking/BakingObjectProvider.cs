@@ -61,7 +61,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 go.name = $"Our Radargram";
                 go.SetActive(true);
 
-                // 2. Add NetworkObject component
+                // 2. Add NetworkObject component first
                 var no = go.AddComponent<NetworkObject>();
                 if (no == null)
                 {
@@ -80,10 +80,10 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                     return NetworkObjectAcquireResult.Failed;
                 }
 
-                // 4. Bake LAST - after ALL changes to Network Object structure
+                // 4. Bake AFTER all components are added but BEFORE moving to runner scene
                 Debug.Log($"About to bake NetworkObject. Current state - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}, Scene: {go.scene.name}, Active: {go.activeInHierarchy}");
                 var bakeResult = Baker.Bake(go);
-                Debug.Log($"Bake result alksjdlfadksf: {bakeResult}, NetworkObject after bake - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}");
+                Debug.Log($"Bake result: {bakeResult}, NetworkObject after bake - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}");
 
                 // if (!no.IsValid)
                 // {
@@ -91,7 +91,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 //     return NetworkObjectAcquireResult.Failed;
                 // }
 
-                // Only move to runner scene after successful bake and complete setup
+                // 5. Move to runner scene AFTER successful bake
                 if (context.DontDestroyOnLoad)
                 {
                     runner.MakeDontDestroyOnLoad(go);
@@ -103,7 +103,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
                 Debug.Log($"Final state - Scene: {go.scene.name}, Active: {go.activeInHierarchy}, NetworkObject valid: {no.IsValid}");
 
-                // 5. Return the NetworkObject instance as the result
+                // 6. Return the NetworkObject instance as the result
                 result = no;
                 return NetworkObjectAcquireResult.Success;
             }
