@@ -6,7 +6,7 @@ using Fusion;
 public class SpawnRadargramTest : MonoBehaviour
 {
     [SerializeField] private NetworkRunner runner;
-    private BakingObjectProvider provider;
+    // private BakingObjectProvider provider;
 
     void Start()
     {
@@ -36,12 +36,12 @@ public class SpawnRadargramTest : MonoBehaviour
         }
 
         // Get and validate the provider
-        provider = runner.GetComponent<BakingObjectProvider>();
-        if (provider == null)
-        {
-            Debug.LogError($"[SpawnRadargramTest [WaitForRunner]] BakingObjectProvider not found on NetworkRunner!");
-            yield break;
-        }
+        // provider = runner.GetComponent<BakingObjectProvider>();
+        // if (provider == null)
+        // {
+        //     Debug.LogError($"[SpawnRadargramTest [WaitForRunner]] BakingObjectProvider not found on NetworkRunner!");
+        //     yield break;
+        // }
 
         // Check if Runner is valid
         if (runner.IsRunning)
@@ -50,7 +50,7 @@ public class SpawnRadargramTest : MonoBehaviour
 
             try
             {
-                provider.ValidateRunnerState(runner);
+                // provider.ValidateRunnerState(runner);
                 SpawnRadargram(1);
             }
             catch (System.Exception ex)
@@ -66,17 +66,17 @@ public class SpawnRadargramTest : MonoBehaviour
 
     public void SpawnRadargram(int segmentIndex)
     {
-        if (runner == null || !runner.IsRunning)
-        {
-            Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] Cannot spawn - NetworkRunner invalid! IsNull: {runner == null}, IsRunning: {runner?.IsRunning}");
-            return;
-        }
+        // if (runner == null || !runner.IsRunning)
+        // {
+        //     Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] Cannot spawn - NetworkRunner invalid! IsNull: {runner == null}, IsRunning: {runner?.IsRunning}");
+        //     return;
+        // }
 
-        if (provider == null)
-        {
-            Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] BakingObjectProvider not found!");
-            return;
-        }
+        // if (provider == null)
+        // {
+        //     Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] BakingObjectProvider not found!");
+        //     return;
+        // }
 
         Debug.Log($"[SpawnRadargramTest [SpawnRadargram]] Attempting to spawn radargram with segment index {segmentIndex}...");
         Debug.Log($"[SpawnRadargramTest [SpawnRadargram]] Runner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
