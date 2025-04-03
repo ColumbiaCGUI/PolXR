@@ -23,28 +23,28 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         result = null;
         try
         {
-            Debug.Log($"AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
+            Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] AcquirePrefabInstance called with ID: {context.PrefabId.RawValue}");
 
             // Validate runner state first
             if (runner == null || !runner.IsRunning)
             {
-                Debug.LogError($"NetworkRunner is not valid or not running. Runner null: {runner == null}, IsRunning: {runner?.IsRunning}");
+                Debug.LogError($"[BakingObjectProvider [AcquirePrefabInstance]] NetworkRunner is not valid or not running. Runner null: {runner == null}, IsRunning: {runner?.IsRunning}");
                 return NetworkObjectAcquireResult.Failed;
             }
 
-            Debug.Log($"NetworkRunner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
+            Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] NetworkRunner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
 
             // Load the RadarShader
             radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
             if (radarShader == null)
             {
-                Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
+                Debug.LogError($"[BakingObjectProvider [AcquirePrefabInstance]] Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
                 return NetworkObjectAcquireResult.Failed;
             }
 
             string flightlineDir = "Assets/AppData/Flightlines/20100324_01";
-            Debug.Log($"Checking directory: {flightlineDir}");
-            Debug.Log($"Directory exists: {Directory.Exists(flightlineDir)}");
+            Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] Checking directory: {flightlineDir}");
+            Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] Directory exists: {Directory.Exists(flightlineDir)}");
 
             if (context.PrefabId.RawValue >= CUSTOM_PREFAB_FLAG)
             {
@@ -52,7 +52,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 var existingObj = GameObject.Find("Our Radargram");
                 if (existingObj != null)
                 {
-                    Debug.LogWarning($"Object 'Our Radargram' already exists in scene. Attempting to use existing object.");
+                    Debug.LogWarning($"[BakingObjectProvider [AcquirePrefabInstance]] Object 'Our Radargram' already exists in scene. Attempting to use existing object.");
                     var existingNo = existingObj.GetComponent<NetworkObject>();
                     if (existingNo != null && existingNo.IsValid)
                     {
@@ -69,7 +69,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 var go = FlightLineAndRadargram(flightlineDir, (int)context.PrefabId.RawValue);
                 if (go == null)
                 {
-                    Debug.LogError("FlightLineAndRadargram returned null");
+                    Debug.LogError($"[BakingObjectProvider [AcquirePrefabInstance]] FlightLineAndRadargram returned null");
                     return NetworkObjectAcquireResult.Failed;
                 }
 
@@ -82,7 +82,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                 var no = go.AddComponent<NetworkObject>();
                 if (no == null)
                 {
-                    Debug.LogError("Failed to add NetworkObject component");
+                    Debug.LogError($"[BakingObjectProvider [AcquirePrefabInstance]] Failed to add NetworkObject component");
                     return NetworkObjectAcquireResult.Failed;
                 }
 
@@ -93,14 +93,14 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
                 if (networkedController == null || networkTransform == null || objectManipulator == null)
                 {
-                    Debug.LogError("Failed to add one or more network components");
+                    Debug.LogError($"[BakingObjectProvider [AcquirePrefabInstance]] Failed to add one or more network components");
                     return NetworkObjectAcquireResult.Failed;
                 }
 
                 // 4. Bake AFTER all components are added but BEFORE moving to runner scene
-                Debug.Log($"About to bake NetworkObject. Current state - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}, Scene: {go.scene.name}, Active: {go.activeInHierarchy}");
+                Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] About to bake NetworkObject. Current state - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}, Scene: {go.scene.name}, Active: {go.activeInHierarchy}");
                 var bakeResult = Baker.Bake(go);
-                Debug.Log($"Bake result: {bakeResult}, NetworkObject after bake - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}");
+                Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] Bake result: {bakeResult}, NetworkObject after bake - IsValid: {no.IsValid}, HasStateAuthority: {no.HasStateAuthority}, Id: {no.Id}");
 
                 // if (!no.IsValid)
                 // {
@@ -118,7 +118,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
                     runner.MoveToRunnerScene(go);
                 }
 
-                Debug.Log($"Final state - Scene: {go.scene.name}, Active: {go.activeInHierarchy}, NetworkObject valid: {no.IsValid}");
+                Debug.Log($"[BakingObjectProvider [AcquirePrefabInstance]] Final state - Scene: {go.scene.name}, Active: {go.activeInHierarchy}, NetworkObject valid: {no.IsValid}");
 
                 // 6. Return the NetworkObject instance as the result
                 result = no;
@@ -127,7 +127,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Exception in AcquirePrefabInstance: {ex.Message}\nStack trace: {ex.StackTrace}");
+            Debug.LogError($"[BakingObjectProvider [AcquirePrefabInstance]] Exception in AcquirePrefabInstance: {ex.Message}\nStack trace: {ex.StackTrace}");
             return NetworkObjectAcquireResult.Failed;
         }
 
@@ -139,14 +139,14 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
         if (segmentFolders == null || segmentFolders.Length == 0)
         {
-            Debug.LogError($"No segment folders found in {flightlineDirectory}");
+            Debug.LogError($"[BakingObjectProvider [FlightLineAndRadargram]] No segment folders found in {flightlineDirectory}");
             return null;
         }
 
         int index = number - CUSTOM_PREFAB_FLAG;
         if (index < 0 || index >= segmentFolders.Length)
         {
-            Debug.LogError($"Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length - 1}");
+            Debug.LogError($"[BakingObjectProvider [FlightLineAndRadargram]] Segment index {index} is out of range. Available segments: 0-{segmentFolders.Length - 1}");
             return null;
         }
 
@@ -199,10 +199,10 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
 
     public void ValidateRunnerState(NetworkRunner runner)
     {
-        Debug.Log($"Runner State: {runner.State}");
-        Debug.Log($"Is SceneAuthority: {runner.IsSceneAuthority}");
-        Debug.Log($"Has provider: {runner.GetComponent<INetworkObjectProvider>() != null}");
-        Debug.Log($"Runner gameObject active: {runner.gameObject.activeInHierarchy}");
+        Debug.Log($"[BakingObjectProvider [ValidateRunnerState]] Runner State: {runner.State}");
+        Debug.Log($"[BakingObjectProvider [ValidateRunnerState]] Is SceneAuthority: {runner.IsSceneAuthority}");
+        Debug.Log($"[BakingObjectProvider [ValidateRunnerState]] Has provider: {runner.GetComponent<INetworkObjectProvider>() != null}");
+        Debug.Log($"[BakingObjectProvider [ValidateRunnerState]] Runner gameObject active: {runner.gameObject.activeInHierarchy}");
     }
 
 
@@ -212,7 +212,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
         if (importedObj == null)
         {
-            Debug.LogError($"Failed to load OBJ: {objPath}");
+            Debug.LogError($"[BakingObjectProvider [LoadObj]] Failed to load OBJ: {objPath}");
             return null;
         }
         return Instantiate(importedObj);
@@ -304,13 +304,13 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
             AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
             lineObj.GetComponent<XRSimpleInteractable>().selectEntered.AddListener(TogglePolyline);
-            Debug.Log(lineObj.GetComponent<XRSimpleInteractable>().selectEntered.ToString());
+            Debug.Log($"[BakingObjectProvider [CreateLineRenderer]] {lineObj.GetComponent<XRSimpleInteractable>().selectEntered.ToString()}");
 
             return lineObj;
         }
         else
         {
-            Debug.LogWarning($"No vertices found in flightline .obj file: {objPath}");
+            Debug.LogWarning($"[BakingObjectProvider [CreateLineRenderer]] No vertices found in flightline .obj file: {objPath}");
             return null;
         }
     }
@@ -319,7 +319,7 @@ public class BakingObjectProvider : NetworkObjectProviderDefault
         IXRSelectInteractable selectedObj = arg0.interactableObject;
         IXRSelectInteractor iXRInteractorObj = arg0.interactorObject;
 
-        Debug.Log("selected");
+        Debug.Log($"[BakingObjectProvider [TogglePolyline]] selected");
     }
 
     private void AttachBoxColliders(GameObject lineObj, Vector3[] vertices)
@@ -509,7 +509,7 @@ public class DataLoaderRunner : NetworkBehaviour
         // Check if the selected DEM directory exists
         if (!Directory.Exists(demDirectoryPath))
         {
-            Debug.LogError($"DEM directory not found: {demDirectoryPath}");
+            Debug.LogWarning($"[BakingObjectProvider [ProcessDEMs]] DEM directory not found: {demDirectoryPath}");
             return;
         }
 
@@ -517,7 +517,7 @@ public class DataLoaderRunner : NetworkBehaviour
         string[] objFiles = Directory.GetFiles(demDirectoryPath, "*.obj");
         if (objFiles.Length == 0)
         {
-            Debug.LogWarning($"No .obj files found in the selected DEM directory: {demDirectoryPath}");
+            Debug.LogWarning($"[BakingObjectProvider [ProcessDEMs]] No .obj files found in the selected DEM directory: {demDirectoryPath}");
             return;
         }
 
@@ -580,7 +580,7 @@ public class DataLoaderRunner : NetworkBehaviour
 
 
                 //NetworkObject radarObj = LoadObj(objFile);
-                Debug.Log("FileName starts with data" + fileName);
+                Debug.Log($"[BakingObjectProvider [flightLineAndRadargram]] FileName starts with data{fileName}");
                 if (radarObj != null)
                 {
                     ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
@@ -599,7 +599,7 @@ public class DataLoaderRunner : NetworkBehaviour
                     }
                     else
                     {
-                        Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
+                        Debug.LogWarning($"[BakingObjectProvider [flightLineAndRadargram]] Radar object '{radarObj.name}' does not have a child named 'mesh'.");
                     }
 
                     // Parent the Radar object to the segment container
@@ -654,7 +654,7 @@ public class DataLoaderRunner : NetworkBehaviour
 
 
                     //NetworkObject radarObj = LoadObj(objFile);
-                    Debug.Log("FileName starts with data" + fileName);
+                    Debug.Log($"[BakingObjectProvider [ProcessFlightlines]] FileName starts with data{fileName}");
                     if (radarObj != null)
                     {
                         ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
@@ -673,7 +673,7 @@ public class DataLoaderRunner : NetworkBehaviour
                         }
                         else
                         {
-                            Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
+                            Debug.LogWarning($"[BakingObjectProvider [ProcessFlightlines]] Radar object '{radarObj.name}' does not have a child named 'mesh'.");
                         }
 
                         // Parent the Radar object to the segment container
@@ -703,7 +703,7 @@ public class DataLoaderRunner : NetworkBehaviour
         GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
         if (importedObj == null)
         {
-            Debug.LogError($"Failed to load OBJ: {objPath}");
+            Debug.LogError($"[BakingObjectProvider [LoadObj]] Failed to load OBJ: {objPath}");
             return null;
         }
         return Instantiate(importedObj);
@@ -795,13 +795,13 @@ public class DataLoaderRunner : NetworkBehaviour
             AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
             lineObj.GetComponent<XRSimpleInteractable>().selectEntered.AddListener(TogglePolyline);
-            Debug.Log(lineObj.GetComponent<XRSimpleInteractable>().selectEntered.ToString());
+            Debug.Log($"[BakingObjectProvider [CreateLineRenderer]] {lineObj.GetComponent<XRSimpleInteractable>().selectEntered.ToString()}");
 
             return lineObj;
         }
         else
         {
-            Debug.LogWarning($"No vertices found in flightline .obj file: {objPath}");
+            Debug.LogWarning($"[BakingObjectProvider [CreateLineRenderer]] No vertices found in flightline .obj file: {objPath}");
             return null;
         }
     }
@@ -810,7 +810,7 @@ public class DataLoaderRunner : NetworkBehaviour
         IXRSelectInteractable selectedObj = arg0.interactableObject;
         IXRSelectInteractor iXRInteractorObj = arg0.interactorObject;
 
-        Debug.Log("selected");
+        Debug.Log($"[BakingObjectProvider [TogglePolyline]] selected");
     }
 
     private void AttachBoxColliders(GameObject lineObj, Vector3[] vertices)

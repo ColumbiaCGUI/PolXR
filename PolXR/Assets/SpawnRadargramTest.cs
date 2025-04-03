@@ -24,14 +24,14 @@ public class SpawnRadargramTest : MonoBehaviour
 
         while ((runner == null || runner.State != NetworkRunner.States.Running || !runner.IsRunning) && elapsed < timeout)
         {
-            Debug.Log($"Waiting for NetworkRunner... Current state: {runner?.State}, IsRunning: {runner?.IsRunning}");
+            Debug.Log($"[SpawnRadargramTest [WaitForRunner]] Waiting for NetworkRunner... Current state: {runner?.State}, IsRunning: {runner?.IsRunning}");
             yield return new WaitForSeconds(0.5f);
             elapsed += 0.5f;
         }
 
         if (runner == null || runner.State != NetworkRunner.States.Running || !runner.IsRunning)
         {
-            Debug.LogError("NetworkRunner failed to reach running state within timeout!");
+            Debug.LogError($"[SpawnRadargramTest [WaitForRunner]] NetworkRunner failed to reach running state within timeout!");
             yield break;
         }
 
@@ -39,14 +39,14 @@ public class SpawnRadargramTest : MonoBehaviour
         provider = runner.GetComponent<BakingObjectProvider>();
         if (provider == null)
         {
-            Debug.LogError("BakingObjectProvider not found on NetworkRunner!");
+            Debug.LogError($"[SpawnRadargramTest [WaitForRunner]] BakingObjectProvider not found on NetworkRunner!");
             yield break;
         }
 
         // Check if Runner is valid
         if (runner.IsRunning)
         {
-            Debug.Log($"NetworkRunner connected and ready! State: {runner.State}");
+            Debug.Log($"[SpawnRadargramTest [WaitForRunner]] NetworkRunner connected and ready! State: {runner.State}");
 
             try
             {
@@ -55,12 +55,12 @@ public class SpawnRadargramTest : MonoBehaviour
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"Error during spawn attempt: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[SpawnRadargramTest [WaitForRunner]] Error during spawn attempt: {ex.Message}\n{ex.StackTrace}");
             }
         }
         else
         {
-            Debug.LogError($"NetworkRunner is not properly initialized! State: {runner.State}");
+            Debug.LogError($"[SpawnRadargramTest [WaitForRunner]] NetworkRunner is not properly initialized! State: {runner.State}");
         }
     }
 
@@ -68,25 +68,25 @@ public class SpawnRadargramTest : MonoBehaviour
     {
         if (runner == null || !runner.IsRunning)
         {
-            Debug.LogError($"Cannot spawn - NetworkRunner invalid! IsNull: {runner == null}, IsRunning: {runner?.IsRunning}");
+            Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] Cannot spawn - NetworkRunner invalid! IsNull: {runner == null}, IsRunning: {runner?.IsRunning}");
             return;
         }
 
         if (provider == null)
         {
-            Debug.LogError("BakingObjectProvider not found!");
+            Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] BakingObjectProvider not found!");
             return;
         }
 
-        Debug.Log($"Attempting to spawn radargram with segment index {segmentIndex}...");
-        Debug.Log($"Runner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
+        Debug.Log($"[SpawnRadargramTest [SpawnRadargram]] Attempting to spawn radargram with segment index {segmentIndex}...");
+        Debug.Log($"[SpawnRadargramTest [SpawnRadargram]] Runner State: {runner.State}, IsSceneAuthority: {runner.IsSceneAuthority}");
 
         try
         {
             // Add additional validation for runner's state
             if (runner.State != NetworkRunner.States.Running)
             {
-                Debug.LogError($"Runner not in Running state. Current state: {runner.State}");
+                Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] Runner not in Running state. Current state: {runner.State}");
                 StartCoroutine(RetrySpawn(segmentIndex));
                 return;
             }
@@ -99,7 +99,7 @@ public class SpawnRadargramTest : MonoBehaviour
             var existingObj = GameObject.Find(existingName);
             if (existingObj != null)
             {
-                Debug.LogWarning($"Object {existingName} already exists in scene. Skipping spawn.");
+                Debug.LogWarning($"[SpawnRadargramTest [SpawnRadargram]] Object {existingName} already exists in scene. Skipping spawn.");
                 return;
             }
 
@@ -110,7 +110,7 @@ public class SpawnRadargramTest : MonoBehaviour
                 rotation: Quaternion.identity,
                 onBeforeSpawned: (runner, obj) =>
                 {
-                    Debug.Log($"Spawning shared object: {obj.name}");
+                    Debug.Log($"[SpawnRadargramTest [SpawnRadargram]] Spawning shared object: {obj.name}");
                     var no = obj.GetComponent<NetworkObject>();
                     if (no != null)
                     {
@@ -122,16 +122,16 @@ public class SpawnRadargramTest : MonoBehaviour
 
             if (spawnedObj != null)
             {
-                Debug.Log($"Successfully spawned shared radargram! NetworkObject valid: {spawnedObj.IsValid}, ID: {spawnedObj.Id}, HasStateAuthority: {spawnedObj.HasStateAuthority}");
+                Debug.Log($"[SpawnRadargramTest [SpawnRadargram]] Successfully spawned shared radargram! NetworkObject valid: {spawnedObj.IsValid}, ID: {spawnedObj.Id}, HasStateAuthority: {spawnedObj.HasStateAuthority}");
             }
             else
             {
-                Debug.LogError("Spawn returned null object!");
+                Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] Spawn returned null object!");
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"Error during spawn: {ex.Message}\n{ex.StackTrace}");
+            Debug.LogError($"[SpawnRadargramTest [SpawnRadargram]] Error during spawn: {ex.Message}\n{ex.StackTrace}");
             // If we get a null reference, retry after a delay
             if (ex is System.NullReferenceException)
             {
@@ -143,7 +143,7 @@ public class SpawnRadargramTest : MonoBehaviour
     private IEnumerator RetrySpawn(int segmentIndex)
     {
         yield return new WaitForSeconds(0.5f);
-        Debug.Log("Retrying spawn...");
+        Debug.Log($"[SpawnRadargramTest [RetrySpawn]] Retrying spawn...");
         SpawnRadargram(segmentIndex);
     }
 }
