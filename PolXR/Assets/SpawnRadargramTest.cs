@@ -83,6 +83,14 @@ public class SpawnRadargramTest : MonoBehaviour
 
         try
         {
+            // Add additional validation for runner's state
+            if (runner.State != NetworkRunner.States.Running)
+            {
+                Debug.LogError($"Runner not in Running state. Current state: {runner.State}");
+                StartCoroutine(RetrySpawn(segmentIndex));
+                return;
+            }
+
             uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + segmentIndex);
             NetworkPrefabId prefabId = new NetworkPrefabId() { RawValue = customPrefabId };
 
@@ -124,6 +132,18 @@ public class SpawnRadargramTest : MonoBehaviour
         catch (System.Exception ex)
         {
             Debug.LogError($"Error during spawn: {ex.Message}\n{ex.StackTrace}");
+            // If we get a null reference, retry after a delay
+            if (ex is System.NullReferenceException)
+            {
+                StartCoroutine(RetrySpawn(segmentIndex));
+            }
         }
+    }
+
+    private IEnumerator RetrySpawn(int segmentIndex)
+    {
+        yield return new WaitForSeconds(0.5f);
+        Debug.Log("Retrying spawn...");
+        SpawnRadargram(segmentIndex);
     }
 }
