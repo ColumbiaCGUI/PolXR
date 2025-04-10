@@ -338,7 +338,7 @@ MonoBehaviour:
   connectionCriterias: 1
   additionalSessionProperties: []
   runner: {fileID: 395877530}
-  userPrefab: {fileID: 3795491436012186113, guid: c05dbfb5e4161244da4f3ba79f2fb226, type: 3}
+  userPrefab: {fileID: 2549000073306557744, guid: 396ff822f8954ed4687bf6045bf1ae65, type: 3}
   onWillConnect:
     m_PersistentCalls:
       m_Calls: []
@@ -755,6 +755,7 @@ GameObject:
   - component: {fileID: 1196559166}
   - component: {fileID: 1196559169}
   - component: {fileID: 1196559170}
+  - component: {fileID: 1196559171}
   m_Layer: 0
   m_Name: Networked Cube
   m_TagString: Untagged
@@ -868,6 +869,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1196559166}
+  - {fileID: 1196559171}
 --- !u!114 &1196559166
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1013,60 +1015,40 @@ MonoBehaviour:
   m_OnDeactivate:
     m_PersistentCalls:
       m_Calls: []
-  m_AttachTransform: {fileID: 0}
-  m_SecondaryAttachTransform: {fileID: 0}
-  m_UseDynamicAttach: 0
-  m_MatchAttachPosition: 1
-  m_MatchAttachRotation: 1
-  m_SnapToColliderVolume: 1
-  m_ReinitializeDynamicAttachEverySingleGrab: 1
-  m_AttachEaseInTime: 0.15
-  m_MovementType: 2
-  m_VelocityDamping: 1
-  m_VelocityScale: 1
-  m_AngularVelocityDamping: 1
-  m_AngularVelocityScale: 1
-  m_TrackPosition: 1
-  m_SmoothPosition: 0
-  m_SmoothPositionAmount: 8
-  m_TightenPosition: 0.1
-  m_TrackRotation: 1
-  m_SmoothRotation: 0
-  m_SmoothRotationAmount: 8
-  m_TightenRotation: 0.1
-  m_TrackScale: 1
-  m_SmoothScale: 0
-  m_SmoothScaleAmount: 8
-  m_TightenScale: 0.1
-  m_ThrowOnDetach: 1
-  m_ThrowSmoothingDuration: 0.25
-  m_ThrowSmoothingCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  m_ThrowVelocityScale: 1.5
-  m_ThrowAngularVelocityScale: 1
-  m_ForceGravityOnDetach: 0
-  m_RetainTransformParent: 1
-  m_AttachPointCompatibilityMode: 0
-  m_StartingSingleGrabTransformers: []
-  m_StartingMultipleGrabTransformers: []
-  m_AddDefaultGrabTransformers: 1
   _networkObject: {fileID: 0}
   _defaultColor: {r: 1, g: 1, b: 1, a: 1}
   _hoverColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   _grabColor: {r: 0, g: 1, b: 0, a: 1}
+--- !u!114 &1196559171
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196559160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dea6e2c57bd432c45becfa162d76acd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  networkTransform: {fileID: 0}
+  networkRigidbody: {fileID: 0}
+  _InitialIsKinematicState:
+    _value: 0
+  _CurrentGrabber: {fileID: 0}
+  expectedIsKinematic: 1
+  applyVelocityOnRelease: 1
+  onDidUngrab:
+    m_PersistentCalls:
+      m_Calls: []
+  onWillGrab:
+    m_PersistentCalls:
+      m_Calls: []
+  onDidGrab:
+    m_PersistentCalls:
+      m_Calls: []
+  extrapolateWhileTakingAuthority: 1
+  isTakingAuthority: 0
 --- !u!1 &1342334985
 GameObject:
   m_ObjectHideFlags: 0
@@ -15514,6 +15496,7 @@ GameObject:
   - component: {fileID: 2987126520822157285}
   - component: {fileID: 3445536156002560075}
   - component: {fileID: 4238143173613089051}
+  - component: {fileID: 8021095452439334103}
   m_Layer: 2
   m_Name: XR Origin (XR Rig)
   m_TagString: Untagged
@@ -16116,6 +16099,24 @@ MonoBehaviour:
   m_CameraFloorOffsetObject: {fileID: 9154497826532263976}
   m_RequestedTrackingOriginMode: 0
   m_CameraYOffset: 1.36144
+--- !u!114 &8021095452439334103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7555960279518514519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16eb8d554c636c9479b4cfc59dbdf775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leftHand: {fileID: 9154497826132014198}
+  rightHand: {fileID: 9154497826408821903}
+  headset: {fileID: 9154497826589627408}
+  onTeleport:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &8055450420511753046
 GameObject:
   m_ObjectHideFlags: 0
@@ -18434,6 +18435,8 @@ GameObject:
   - component: {fileID: 4414883873551890459}
   - component: {fileID: 9154497826132014190}
   - component: {fileID: 8223227746876450759}
+  - component: {fileID: 9154497826132014198}
+  - component: {fileID: 9154497826132014199}
   m_Layer: 0
   m_Name: Left Controller
   m_TagString: Untagged
@@ -18441,6 +18444,108 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &9154497826132014198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826132014197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2aa5f455ecb4d8440a6a27adbfcd1488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  side: 2
+  handCommand:
+    thumbTouchedCommand: 0
+    indexTouchedCommand: 0
+    gripCommand: 0
+    triggerCommand: 0
+    poseCommand: 0
+    pinchCommand: 0
+  isGrabbing: 0
+  thumbAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Thumb
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 38a3ebf5-7d59-4b67-b681-e3400bacc89a
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  gripAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Grip
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: e60f71cb-30f4-49dc-a852-4186f7eed226
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  triggerAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Trigger
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 5bc0fe98-0255-4d1a-bbf1-a4337b29443d
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  indexAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Index
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 40b4b828-52aa-4d7a-bd4a-bf63df88d370
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  handPose: 0
+  grabAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Grab
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 9fbdafa7-9f99-4724-bcef-cbcbfb99ce6b
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  grabThreshold: 0.5
+  updateHandCommandWithAction: 1
+  updateGrabWithAction: 1
+  networkTransform: {fileID: 0}
+--- !u!114 &9154497826132014199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826132014197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a30b2e8ae59b3c94a98a1786b27acdb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isDeviceFound: 0
+  shouldSynchDevicePosition: 1
+  updateOnAfterInputSystemUpdate: 1
+  side: 0
 --- !u!1 &9154497826408821898
 GameObject:
   m_ObjectHideFlags: 0
@@ -18453,6 +18558,8 @@ GameObject:
   - component: {fileID: 3571774582691902512}
   - component: {fileID: 9154497826408821902}
   - component: {fileID: 2568630656451986117}
+  - component: {fileID: 9154497826408821903}
+  - component: {fileID: 9154497826408821904}
   m_Layer: 0
   m_Name: Right Controller
   m_TagString: Untagged
@@ -18705,6 +18812,108 @@ MonoBehaviour:
       m_Flags: 0
     m_Reference: {fileID: -6447266317303757838, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_ButtonPressPoint: 0.5
+--- !u!114 &9154497826408821903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826408821898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2aa5f455ecb4d8440a6a27adbfcd1488, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  side: 3
+  handCommand:
+    thumbTouchedCommand: 0
+    indexTouchedCommand: 0
+    gripCommand: 0
+    triggerCommand: 0
+    poseCommand: 0
+    pinchCommand: 0
+  isGrabbing: 0
+  thumbAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Thumb
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 479ef427-a49b-46d2-a5f9-2200c2fa04b1
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  gripAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Grip
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: c7cb6bcd-00fd-4ad3-abae-2f0f8f563c31
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  triggerAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Trigger
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 619c8710-5d00-4ce0-9453-179152fa94d0
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  indexAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Index
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 2e0ac55a-d8e8-4554-a227-253c0b846540
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  handPose: 0
+  grabAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: Grab
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: f269a984-5a1d-4cdd-b1d6-d90dd26682e5
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  grabThreshold: 0.5
+  updateHandCommandWithAction: 1
+  updateGrabWithAction: 1
+  networkTransform: {fileID: 0}
+--- !u!114 &9154497826408821904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826408821898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a30b2e8ae59b3c94a98a1786b27acdb5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isDeviceFound: 0
+  shouldSynchDevicePosition: 1
+  updateOnAfterInputSystemUpdate: 1
+  side: 1
 --- !u!1 &9154497826532263976
 GameObject:
   m_ObjectHideFlags: 0
@@ -18771,6 +18980,7 @@ GameObject:
   - component: {fileID: 9154497826589627405}
   - component: {fileID: 9154497826589627407}
   - component: {fileID: 2987126520822157289}
+  - component: {fileID: 9154497826589627408}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -18837,6 +19047,20 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9154497826589627403}
   m_Enabled: 1
+--- !u!114 &9154497826589627408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826589627403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86d88d4f4f553024e872a242fd190b96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fader: {fileID: 0}
+  networkTransform: {fileID: 0}
 --- !u!114 &9169512061853443837
 MonoBehaviour:
   m_ObjectHideFlags: 0

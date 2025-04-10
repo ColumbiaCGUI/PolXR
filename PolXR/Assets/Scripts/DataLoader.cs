@@ -8,6 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.Samples.Hands;
 using UnityEngine.XR.Interaction.Toolkit.Transformers;
+using Fusion;
 //using Fusion;
 
 
@@ -300,7 +301,10 @@ public class DataLoader : MonoBehaviour
                         //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
                         //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
 
+                        // Add NetworkedObjectManipulator
 
+
+                        // Set layer
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarMesh.layer = RadarGramLayer;
                     }
@@ -331,7 +335,7 @@ public class DataLoader : MonoBehaviour
         Debug.Log(radargramMesh.name);
         Debug.Log(radargramMesh.transform);
 
-        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000, 
+        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000,
             radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
         radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
         // radargramMesh.localRotation = Quaternion.identity;
@@ -447,12 +451,26 @@ public class DataLoader : MonoBehaviour
             {
                 if (child.name.StartsWith("Flightline"))
                 {
-                    lineObj.AddComponent<XRSimpleInteractable>();
+
+                    lineObj.AddComponent<NetworkedObjectManipulator>();
+                    lineObj.AddComponent<NetworkObject>();
+                    NetworkObject no = lineObj.GetComponent<NetworkObject>();
+                    // Allow state authority override on the network object
+                    if (no != null)
+                    {
+                        no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to add NetworkObject to lineObj");
+                    }
+                    lineObj.AddComponent<NetworkTransform>();
+
                     break;
                 }
             }
 
-            XRSimpleInteractable m_Interactable = lineObj.GetComponent<XRSimpleInteractable>();
+            NetworkedObjectManipulator m_Interactable = lineObj.GetComponent<NetworkedObjectManipulator>();
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
 
             return lineObj;
@@ -481,7 +499,7 @@ public class DataLoader : MonoBehaviour
                 child.gameObject.SetActive(!child.gameObject.activeSelf);
 
                 Transform meshChild = child.transform.Find("mesh");
-                
+
                 meshChild.localRotation = Quaternion.identity;
                 meshChild.localPosition = new Vector3(0, 0, 0);
                 meshChild.localScale = Vector3.one;
@@ -530,8 +548,8 @@ public class DataLoader : MonoBehaviour
         }
     }
 
-    void ToggleRadargram(bool arg0) 
-    { 
+    void ToggleRadargram(bool arg0)
+    {
         // TODO
     }
 

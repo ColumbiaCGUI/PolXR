@@ -208,6 +208,7 @@ namespace Fusion.Addons.ConnectionManagerAddon
             if (player == runner.LocalPlayer && userPrefab != null)
             {
                 // Spawn the user prefab for the local user
+                Debug.Log("OnPlayerJoinedSharedMode");
                 NetworkObject networkPlayerObject = runner.Spawn(userPrefab, position: transform.position, rotation: transform.rotation, player, (runner, obj) => {
                 });
             }

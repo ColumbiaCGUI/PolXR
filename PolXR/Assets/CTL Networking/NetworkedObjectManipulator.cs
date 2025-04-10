@@ -7,7 +7,7 @@ using Fusion.Sockets;
 using System;
 
 [RequireComponent(typeof(NetworkObject))]
-public class NetworkedObjectManipulator : XRGrabInteractable
+public class NetworkedObjectManipulator : XRSimpleInteractable
 {
     [SerializeField] private NetworkObject _networkObject;
     private NetworkTransform _networkTransform;
