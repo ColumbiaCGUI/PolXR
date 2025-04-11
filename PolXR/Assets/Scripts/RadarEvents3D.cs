@@ -222,7 +222,8 @@ public class RadarEvents3D : RadarEvents//, IMixedRealityPointerHandler
         radargrams.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
     }
 
-    // Reset the radar as if it had not been loaded
+    // Reset the radar as if it had not been loaded 
+    // THIS IS UNUSED
     public void ResetRadar()
     {
         // Return the radargrams to their original position
