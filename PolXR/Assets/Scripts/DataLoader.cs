@@ -311,6 +311,7 @@ public class DataLoader : MonoBehaviour
             }
         }
     }
+
     private void ProcessDEMs(GameObject parent)
     {
         Debug.Log("DataLoader Process DEMs called!");
@@ -466,7 +467,6 @@ public class DataLoader : MonoBehaviour
 
         Transform meshTransform = component.transform;
         Debug.Log(meshTransform.name);
-
     }
 
     // Reset Radargram interactable back to position 0,0,0, rotation 0,0,0, scale 1,1,1
@@ -513,7 +513,6 @@ public class DataLoader : MonoBehaviour
             }
 
             GameObject loadedObject;
-
             if (optimized)
             {
                 loadedObject = new OptimizedOBJLoader.OBJLoader().Load(objPath);
@@ -540,6 +539,7 @@ public class DataLoader : MonoBehaviour
                 {
                     vertices[i].x = -vertices[i].x;
                 }
+
                 mesh.vertices = vertices;
 
                 // Reverse triangle winding order
@@ -553,6 +553,7 @@ public class DataLoader : MonoBehaviour
                         triangles[i] = triangles[i + 1];
                         triangles[i + 1] = temp;
                     }
+
                     mesh.SetTriangles(triangles, submesh);
                 }
 
@@ -570,8 +571,7 @@ public class DataLoader : MonoBehaviour
     }
 
 
-
-    private Texture2D LoadTexture(string texturePath)
+        private Texture2D LoadTexture(string texturePath)
     {
         byte[] fileData = File.ReadAllBytes(texturePath);
         Texture2D texture = new Texture2D(2, 2);
@@ -656,7 +656,6 @@ public class DataLoader : MonoBehaviour
                 }
             }
 
-
             XRSimpleInteractable m_Interactable = lineObj.GetComponent<XRSimpleInteractable>();
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
 
@@ -692,7 +691,6 @@ public class DataLoader : MonoBehaviour
                 child.gameObject.SetActive(!child.gameObject.activeSelf);
 
                 Transform meshChild = child.transform.Find("mesh");
-
                 meshChild.localRotation = Quaternion.identity;
                 meshChild.localPosition = new Vector3(0, 0, 0);
                 meshChild.localScale = Vector3.one;
@@ -790,7 +788,6 @@ public class DataLoader : MonoBehaviour
 
         radarMenuRadargramToggle.onValueChanged.AddListener(ToggleRadargram);
         mainMenuFlightlinesToggle.onValueChanged.AddListener(ToggleFlightlines);
-
     }
 
     private void SetButtonsForMenus()
