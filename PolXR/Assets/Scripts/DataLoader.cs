@@ -435,6 +435,7 @@ public class DataLoader : MonoBehaviour
                         IradarObj.throwOnDetach = false;
                         //IradarObj.matchAttachRotation = false;
                         IradarObj.useDynamicAttach = true;
+                        IradarObj.attachEaseInTime = 0f;
 
                         radarObj.GetComponent<Rigidbody>().useGravity = false;
                         radarObj.GetComponent<Rigidbody>().isKinematic = false;
