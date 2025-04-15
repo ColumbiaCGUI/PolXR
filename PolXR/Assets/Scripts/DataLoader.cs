@@ -277,7 +277,7 @@ public class DataLoader : MonoBehaviour
                         bc.convex = true;
 
                         // Attach the Grab Interactable
-                        XRGrabInteractable IradarObj = radarMesh.AddComponent<XRGrabInteractable>();
+                        XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
                         // Add Rotation Constraints for Y Axis Only
                         IradarObj.movementType = XRBaseInteractable.MovementType.Instantaneous;
@@ -288,14 +288,14 @@ public class DataLoader : MonoBehaviour
                         //IradarObj.matchAttachRotation = false;
                         IradarObj.useDynamicAttach = true;
 
-                        radarMesh.GetComponent<Rigidbody>().useGravity = false;
-                        radarMesh.GetComponent<Rigidbody>().isKinematic = false;
+                        radarObj.GetComponent<Rigidbody>().useGravity = false;
+                        radarObj.GetComponent<Rigidbody>().isKinematic = false;
                         // radarObj.GetComponent<Rigidbody>().freezeRotation = false;
 
                         // LockObj.canProcess = true;
 
                         IradarObj.firstSelectEntered.AddListener(ConvertRadargramToWorld);
-                        IradarObj.lastSelectExited.AddListener(ResetRadargram);
+                        // IradarObj.lastSelectExited.AddListener(ResetRadargram);
 
                         //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
                         //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
@@ -331,7 +331,7 @@ public class DataLoader : MonoBehaviour
         Debug.Log(radargramMesh.name);
         Debug.Log(radargramMesh.transform);
 
-        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000, 
+        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000,
             radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
         radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
         // radargramMesh.localRotation = Quaternion.identity;
@@ -481,7 +481,7 @@ public class DataLoader : MonoBehaviour
                 child.gameObject.SetActive(!child.gameObject.activeSelf);
 
                 Transform meshChild = child.transform.Find("mesh");
-                
+
                 meshChild.localRotation = Quaternion.identity;
                 meshChild.localPosition = new Vector3(0, 0, 0);
                 meshChild.localScale = Vector3.one;
@@ -530,8 +530,8 @@ public class DataLoader : MonoBehaviour
         }
     }
 
-    void ToggleRadargram(bool arg0) 
-    { 
+    void ToggleRadargram(bool arg0)
+    {
         // TODO
     }
 
