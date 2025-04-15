@@ -453,18 +453,13 @@ public class DataLoader : MonoBehaviour
                 {
 
                     lineObj.AddComponent<NetworkedObjectManipulator>();
-                    lineObj.AddComponent<NetworkObject>();
+                    lineObj.AddComponent<XRSimpleInteractable>();
                     NetworkObject no = lineObj.GetComponent<NetworkObject>();
                     // Allow state authority override on the network object
                     if (no != null)
                     {
                         no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
                     }
-                    else
-                    {
-                        Debug.LogError("Failed to add NetworkObject to lineObj");
-                    }
-                    lineObj.AddComponent<NetworkTransform>();
 
                     break;
                 }
