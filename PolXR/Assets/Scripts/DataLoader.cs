@@ -453,7 +453,6 @@ public class DataLoader : MonoBehaviour
                 {
 
                     lineObj.AddComponent<NetworkedObjectManipulator>();
-                    lineObj.AddComponent<XRSimpleInteractable>();
                     NetworkObject no = lineObj.GetComponent<NetworkObject>();
                     // Allow state authority override on the network object
                     if (no != null)
