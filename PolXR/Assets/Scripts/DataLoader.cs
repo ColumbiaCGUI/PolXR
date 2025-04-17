@@ -452,7 +452,7 @@ public class DataLoader : MonoBehaviour
                 if (child.name.StartsWith("Flightline"))
                 {
 
-                    lineObj.AddComponent<NetworkedObjectManipulator>();
+                    lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
                     NetworkObject no = lineObj.GetComponent<NetworkObject>();
                     // Allow state authority override on the network object
                     if (no != null)
@@ -464,7 +464,7 @@ public class DataLoader : MonoBehaviour
                 }
             }
 
-            NetworkedObjectManipulator m_Interactable = lineObj.GetComponent<NetworkedObjectManipulator>();
+            NetworkedObjectSimpleInteractable m_Interactable = lineObj.GetComponent<NetworkedObjectSimpleInteractable>();
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
 
             return lineObj;
