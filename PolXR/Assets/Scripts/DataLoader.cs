@@ -278,7 +278,7 @@ public class DataLoader : MonoBehaviour
                         bc.convex = true;
 
                         // Attach the Grab Interactable
-                        XRGrabInteractable IradarObj = radarMesh.AddComponent<XRGrabInteractable>();
+                        XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
                         // Add Rotation Constraints for Y Axis Only
                         IradarObj.movementType = XRBaseInteractable.MovementType.Instantaneous;
@@ -289,14 +289,14 @@ public class DataLoader : MonoBehaviour
                         //IradarObj.matchAttachRotation = false;
                         IradarObj.useDynamicAttach = true;
 
-                        radarMesh.GetComponent<Rigidbody>().useGravity = false;
-                        radarMesh.GetComponent<Rigidbody>().isKinematic = false;
+                        radarObj.GetComponent<Rigidbody>().useGravity = false;
+                        radarObj.GetComponent<Rigidbody>().isKinematic = false;
                         // radarObj.GetComponent<Rigidbody>().freezeRotation = false;
 
                         // LockObj.canProcess = true;
 
                         IradarObj.firstSelectEntered.AddListener(ConvertRadargramToWorld);
-                        IradarObj.lastSelectExited.AddListener(ResetRadargram);
+                        // IradarObj.lastSelectExited.AddListener(ResetRadargram);
 
                         //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
                         //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
