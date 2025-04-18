@@ -2,13 +2,13 @@
 //using Microsoft.MixedReality.Toolkit;
 //using Microsoft.MixedReality.Toolkit.UI;
 //using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
-using System.Collections;
+
 using System.Collections.Generic;
-using UnityEngine;
-using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnityEngine;
+using UnityEngine.Rendering;
 
 public class RadarEvents3D : RadarEvents//, IMixedRealityPointerHandler
 {
@@ -193,8 +193,8 @@ public class RadarEvents3D : RadarEvents//, IMixedRealityPointerHandler
     private static void ToOpaqueMode(Material material)
     {
         material.SetOverrideTag("RenderType", "");
-        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+        material.SetInt("_SrcBlend", (int)BlendMode.One);
+        material.SetInt("_DstBlend", (int)BlendMode.Zero);
         material.SetInt("_ZWrite", 1);
         material.DisableKeyword("_ALPHATEST_ON");
         material.DisableKeyword("_ALPHABLEND_ON");
@@ -205,13 +205,13 @@ public class RadarEvents3D : RadarEvents//, IMixedRealityPointerHandler
     private static void ToFadeMode(Material material)
     {
         material.SetOverrideTag("RenderType", "Transparent");
-        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
         material.SetInt("_ZWrite", 0);
         material.DisableKeyword("_ALPHATEST_ON");
         material.EnableKeyword("_ALPHABLEND_ON");
         material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        material.renderQueue = (int)RenderQueue.Transparent;
     }
 
     // Just resets the radar transform
