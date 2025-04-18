@@ -339,6 +339,7 @@ public class DataLoader : MonoBehaviour
         
         radargramMesh.localPosition = new Vector3(0, 0, 0);
         radargramMesh.position = new Vector3(radargramMesh.position.x, clampedYPos, radargramMesh.position.z);
+        radargramMesh.localEulerAngles = new Vector3(0, 0, 0);
         radargramMesh.localScale = Vector3.one; // TODO : Needs to be changed if radargram is scaled
         
         axesConstraint.StartConstraining();
