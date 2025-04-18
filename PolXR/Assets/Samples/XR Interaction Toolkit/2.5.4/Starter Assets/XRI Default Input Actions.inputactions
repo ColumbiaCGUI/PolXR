@@ -1606,6 +1606,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Pick Line",
+                    "type": "Button",
+                    "id": "059365bb-d31a-477e-acba-1d9f73df148b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -1793,6 +1802,17 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Toggle",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2dacda14-ac5c-4aa6-bc96-77dbf6182662",
+                    "path": "<XRController>{RightHand}/triggerPressed",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pick Line",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
