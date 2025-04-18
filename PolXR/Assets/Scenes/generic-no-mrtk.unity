@@ -538,6 +538,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &701857225 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1787346994484839025, guid: ad818c36731146e994540a1896ad8f24,
+    type: 3}
+  m_PrefabInstance: {fileID: 1977042971637731410}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &740991663
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4551,7 +4557,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents: [{targetCorrespondingSourceObject: {fileID: 1787346994484839025,
+          guid: ad818c36731146e994540a1896ad8f24, type: 3}, insertIndex: -1, addedObject: {
+          fileID: 1977042971637731416}}]
   m_SourcePrefab: {fileID: 100100000, guid: ad818c36731146e994540a1896ad8f24, type: 3}
 --- !u!4 &1977042971637731411 stripped
 Transform:
@@ -4565,7 +4573,7 @@ MonoBehaviour:
     type: 3}
   m_PrefabInstance: {fileID: 1977042971637731410}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 701857225}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6803edce0201f574f923fd9d10e5b30a, type: 3}
@@ -4577,12 +4585,28 @@ MonoBehaviour:
     type: 3}
   m_PrefabInstance: {fileID: 1977042971637731410}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 701857225}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e988983f96fe1dd48800bcdfc82f23e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1977042971637731416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 701857225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cae1afb04ee15e049b18ef73204cd48a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isLinePickingEnabled: 0
+  toggleLinePickingButton: {fileID: -4419376027955073683, guid: c348712bda248c246b8c49b3db54643f,
+    type: 3}
+  interactorLineVisual: {fileID: 1977042971637731414}
 --- !u!1 &2009878126372913756
 GameObject:
   m_ObjectHideFlags: 0

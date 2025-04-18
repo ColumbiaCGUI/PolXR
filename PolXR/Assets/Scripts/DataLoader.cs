@@ -435,7 +435,6 @@ public class DataLoader : MonoBehaviour
                         IradarObj.throwOnDetach = false;
                         //IradarObj.matchAttachRotation = false;
                         IradarObj.useDynamicAttach = true;
-                        IradarObj.attachEaseInTime = 0f;
 
                         radarObj.GetComponent<Rigidbody>().useGravity = false;
                         radarObj.GetComponent<Rigidbody>().isKinematic = false;
@@ -445,6 +444,10 @@ public class DataLoader : MonoBehaviour
 
                         IradarObj.firstSelectEntered.AddListener(ConvertRadargramToWorld);
                         // IradarObj.lastSelectExited.AddListener(ResetRadargram);
+
+                        //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
+                        //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
+
 
                         //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
                         //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
