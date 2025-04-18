@@ -414,13 +414,7 @@ public class DataLoader : MonoBehaviour
 
                         // Add necessary components to the Radar object
 
-                        // Attach the Box Collider
                         GameObject radarMesh = meshChild.gameObject;
-
-                        //BoxCollider bc = radarMesh.AddComponent<BoxCollider>();
-                        //Vector3 meshExtents = radarMesh.GetComponentInChildren<MeshRenderer>().bounds.extents;
-                        //bc.size = new Vector3(meshExtents.x, meshExtents.y, meshExtents.z);
-                        //Debug.Log(bc.size);
 
                         MeshCollider bc = radarMesh.AddComponent<MeshCollider>();
                         bc.convex = true;
