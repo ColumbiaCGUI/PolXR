@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.XR.Interaction.Toolkit;
 
 public class ToggleLinePickingMode : MonoBehaviour
@@ -7,13 +8,17 @@ public class ToggleLinePickingMode : MonoBehaviour
     public bool isLinePickingEnabled = false;
     
     [SerializeField] private InputActionReference toggleLinePickingButton;
-    [SerializeField] private XRInteractorLineVisual interactorLineVisual;
-
-    private float _initialLineBendRatio;
+    
+    [SerializeField] private XRInteractorLineVisual leftControllerLineVisual;
+    [SerializeField] private XRInteractorLineVisual rightControllerLineVisual;
+    
+    private float _initialLeftControllerLineBendRatio;
+    private float _initialRightControllerLineBendRatio;
 
     private void Start()
     {
-        _initialLineBendRatio = interactorLineVisual.lineBendRatio;
+        _initialLeftControllerLineBendRatio = leftControllerLineVisual.lineBendRatio;
+        _initialRightControllerLineBendRatio = rightControllerLineVisual.lineBendRatio;
     }
     
     private void OnEnable()
@@ -43,13 +48,15 @@ public class ToggleLinePickingMode : MonoBehaviour
         isLinePickingEnabled = true;
 
         // Make the ray interactor line straight to make line picking feel as precise as possible
-        interactorLineVisual.lineBendRatio = 1.0f;
+        leftControllerLineVisual.lineBendRatio = 1.0f;
+        rightControllerLineVisual.lineBendRatio = 1.0f;
     }
 
     private void DisableLinePicking()
     {
         isLinePickingEnabled = false;
         
-        interactorLineVisual.lineBendRatio = _initialLineBendRatio;
+        leftControllerLineVisual.lineBendRatio = _initialLeftControllerLineBendRatio;
+        rightControllerLineVisual.lineBendRatio = _initialRightControllerLineBendRatio;
     }
 }
