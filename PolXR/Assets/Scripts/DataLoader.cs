@@ -265,32 +265,41 @@ public class DataLoader : MonoBehaviour
 
                         // Add necessary components to the Radar object
 
+                        // Attach the Box Collider
                         GameObject radarMesh = meshChild.gameObject;
+
+                        //BoxCollider bc = radarMesh.AddComponent<BoxCollider>();
+                        //Vector3 meshExtents = radarMesh.GetComponentInChildren<MeshRenderer>().bounds.extents;
+                        //bc.size = new Vector3(meshExtents.x, meshExtents.y, meshExtents.z);
+                        //Debug.Log(bc.size);
 
                         MeshCollider bc = radarMesh.AddComponent<MeshCollider>();
                         bc.convex = true;
 
                         // Attach the Grab Interactable
-                        XRGrabInteractable IradarObj = radarMesh.AddComponent<XRGrabInteractable>();
+                        XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
                         // Add Rotation Constraints for Y Axis Only
-                        IradarObj.movementType = XRBaseInteractable.MovementType.Kinematic;
+                        IradarObj.movementType = XRBaseInteractable.MovementType.Instantaneous;
+                        //IradarObj.trackPosition = true;
+                        //IradarObj.trackRotation = false;
+                        // IradarObj.trackScale = false;
                         IradarObj.throwOnDetach = false;
+                        //IradarObj.matchAttachRotation = false;
                         IradarObj.useDynamicAttach = true;
-                        IradarObj.attachEaseInTime = 0f;
 
-                        Rigidbody radarMeshRb = radarMesh.GetComponent<Rigidbody>();
-                        radarMeshRb.useGravity = false;
-                        radarMeshRb.isKinematic = true;
+                        radarObj.GetComponent<Rigidbody>().useGravity = false;
+                        radarObj.GetComponent<Rigidbody>().isKinematic = false;
+                        // radarObj.GetComponent<Rigidbody>().freezeRotation = false;
 
-                        ConstrainAxes constrainAxes = radarMesh.AddComponent<ConstrainAxes>();
-                        constrainAxes.ConstrainToVerticalMovement();
-                        constrainAxes.constrainXRot = true;
-                        constrainAxes.constrainYRot = true;
-                        constrainAxes.constrainZRot = true;
+                        // LockObj.canProcess = true;
 
                         IradarObj.firstSelectEntered.AddListener(ConvertRadargramToWorld);
-                        IradarObj.lastSelectExited.AddListener(ResetRadargram);
+                        // IradarObj.lastSelectExited.AddListener(ResetRadargram);
+
+                        //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
+                        //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
+
 
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarMesh.layer = RadarGramLayer;
@@ -320,19 +329,14 @@ public class DataLoader : MonoBehaviour
 
         Transform radargramMesh = component.transform;
         Debug.Log(radargramMesh.name);
-        Debug.Log(radargramMesh.transform.position);
-        
-        Vector3 cachedPos = radargramMesh.transform.position;
-        float clampedYPos = Mathf.Clamp(cachedPos.y, 0, Mathf.Infinity); // (possible) TODO: add max y-value based on height of radargram mesh?
+        Debug.Log(radargramMesh.transform);
 
-        ConstrainAxes axesConstraint = radargramMesh.GetComponent<ConstrainAxes>();
-        axesConstraint.StopConstraining();
-        
-        radargramMesh.localPosition = new Vector3(0, 0, 0);
-        radargramMesh.position = new Vector3(radargramMesh.position.x, clampedYPos, radargramMesh.position.z);
+        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000, 
+            radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
+        radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
+        // radargramMesh.localRotation = Quaternion.identity;
+        // radargramMesh.localPosition = new Vector3(0, 0, 0);
         radargramMesh.localScale = Vector3.one; // TODO : Needs to be changed if radargram is scaled
-        
-        axesConstraint.StartConstraining();
     }
 
     void OpenRadarMenu(SelectExitEventArgs args)
