@@ -280,23 +280,26 @@ public class DataLoader : MonoBehaviour
                         XRGrabInteractable IradarObj = radarMesh.AddComponent<XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
                         // Add Rotation Constraints for Y Axis Only
-                        IradarObj.movementType = XRBaseInteractable.MovementType.Kinematic;
+                        IradarObj.movementType = XRBaseInteractable.MovementType.Instantaneous;
+                        //IradarObj.trackPosition = true;
+                        //IradarObj.trackRotation = false;
+                        // IradarObj.trackScale = false;
                         IradarObj.throwOnDetach = false;
+                        //IradarObj.matchAttachRotation = false;
                         IradarObj.useDynamicAttach = true;
-                        IradarObj.attachEaseInTime = 0f;
 
                         Rigidbody radarMeshRb = radarMesh.GetComponent<Rigidbody>();
                         radarMeshRb.useGravity = false;
                         radarMeshRb.isKinematic = true;
 
-                        ConstrainAxes constrainAxes = radarMesh.AddComponent<ConstrainAxes>();
-                        constrainAxes.ConstrainToVerticalMovement();
-                        constrainAxes.constrainXRot = true;
-                        constrainAxes.constrainYRot = true;
-                        constrainAxes.constrainZRot = true;
+                        // LockObj.canProcess = true;
 
                         IradarObj.firstSelectEntered.AddListener(ConvertRadargramToWorld);
                         IradarObj.lastSelectExited.AddListener(ResetRadargram);
+
+                        //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
+                        //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
+
 
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarMesh.layer = RadarGramLayer;
