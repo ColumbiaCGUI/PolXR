@@ -395,7 +395,8 @@ public class DataLoader : MonoBehaviour
                         Transform meshChild = radarObj.transform.Find("mesh");
                         if (meshChild != null)
                         {
-                            string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
+                            string texturePath = Path.Combine(segmentFolder,
+                                Path.GetFileNameWithoutExtension(objFile) + ".png");
                             if (File.Exists(texturePath))
                             {
                                 Texture2D texture = LoadTexture(texturePath);
@@ -623,6 +624,7 @@ public class DataLoader : MonoBehaviour
 
                     vertices.Add(new Vector3(x, y, z));
                 }
+
                 index++;
             }
         }
@@ -777,12 +779,15 @@ public class DataLoader : MonoBehaviour
     private void SetTogglesForMenus()
     {
         Toggle radarMenuRadargramToggle = GameObject.Find("RadarMenu/Toggles/Radargram Toggle").GetComponent<Toggle>();
-        Toggle radarMenuSurfaceDEMToggle = GameObject.Find("RadarMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
+        Toggle radarMenuSurfaceDEMToggle =
+            GameObject.Find("RadarMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
 
         //BoundingBox Not Implemented
-        Toggle mainMenuBoundingBoxToggle = GameObject.Find("MainMenu/Toggles/BoundingBox Toggle").GetComponent<Toggle>();
+        Toggle mainMenuBoundingBoxToggle =
+            GameObject.Find("MainMenu/Toggles/BoundingBox Toggle").GetComponent<Toggle>();
 
-        Toggle mainMenuFlightlinesToggle = GameObject.Find("MainMenu/Toggles/Flightlines Toggle").GetComponent<Toggle>();
+        Toggle mainMenuFlightlinesToggle =
+            GameObject.Find("MainMenu/Toggles/Flightlines Toggle").GetComponent<Toggle>();
         Toggle mainMenuSurfaceDEMToggle = GameObject.Find("MainMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
         Toggle mainMenuBaseDEMToggle = GameObject.Find("MainMenu/Toggles/Base DEM Toggle").GetComponent<Toggle>();
 
@@ -813,8 +818,10 @@ public class DataLoader : MonoBehaviour
         Button mmClose = GameObject.Find("MainMenu/Buttons/ButtonClose").GetComponent<Button>();
         mmClose.onClick.AddListener(CloseMainMenu);
         Button mmMiniMap = GameObject.Find("MainMenu/Buttons/ButtonMiniMap").GetComponent<Button>(); // NOT IMPLEMENTED
-        Button mmLoadScene = GameObject.Find("MainMenu/Buttons/ButtonLoadScene").GetComponent<Button>(); // NOT IMPLEMENTED
-        Button mmHomeScreen = GameObject.Find("MainMenu/Buttons/ButtonHomeScreen").GetComponent<Button>(); // NOT IMPLEMENTED
+        Button mmLoadScene =
+            GameObject.Find("MainMenu/Buttons/ButtonLoadScene").GetComponent<Button>(); // NOT IMPLEMENTED
+        Button mmHomeScreen =
+            GameObject.Find("MainMenu/Buttons/ButtonHomeScreen").GetComponent<Button>(); // NOT IMPLEMENTED
     }
 
     void DisableMenus()
@@ -866,7 +873,7 @@ public class DataLoader : MonoBehaviour
     }
 
     private void ScaleAndRotate(GameObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
-    // private void ScaleAndRotate(NetworkObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
+        // private void ScaleAndRotate(NetworkObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
     {
         obj.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
         obj.transform.eulerAngles = new Vector3(rotationX, 0f, 0f);
