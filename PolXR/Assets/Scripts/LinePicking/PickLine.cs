@@ -64,10 +64,9 @@ namespace LinePicking
                 // Approximate UV coordinates from hit position
                 Vector2 uvCoordinates = UVHelpers.ApproximateUVFromHit(raycastHit.point, meshObj);
 
-                // can i get the cross product of the ray and the mesh
-                Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(uvCoordinates, meshObj, hitRadargram.name, raycastHit.normal, pixelsBetweenPoints);
-                GameObject markObj = Instantiate(markObjPrefab, raycastHit.point, hitRadargram.rotation);
-                markObj.transform.parent = hitRadargram;
+            Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(uvCoordinates, meshObj, hitRadargram.name, pixelsBetweenPoints);
+            GameObject markObj = Instantiate(markObjPrefab, raycastHit.point, hitRadargram.rotation);
+            markObj.transform.parent = hitRadargram;
 
                 DrawPickedPointsAsLine(worldCoords, hitRadargram);
             }

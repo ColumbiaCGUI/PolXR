@@ -205,6 +205,8 @@ namespace LinePicking
             // Initialize arrays for storing coordinates
             Vector2[] uvs = new Vector2[numSamples];
 
+            int maxLocalVal;
+            int maxLocalY;
             int j = 0; // Index for the sampled arrays
 
             // Process pixels with sampling
