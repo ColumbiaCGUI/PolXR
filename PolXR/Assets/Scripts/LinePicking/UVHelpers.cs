@@ -1,8 +1,9 @@
 using System;
+using UniGLTF.MeshUtility;
 using UnityEngine;
 
 namespace LinePicking
-{ 
+{
     public static class UVHelpers
     {
         // Approximates UV coordinates from a hit position on a curved mesh
@@ -105,10 +106,10 @@ namespace LinePicking
             return Vector3.zero;
         }
 
-        public static Vector3[] GetLinePickingPoints(Vector2 uv, GameObject curmesh, string imgname, int sampleRate = 1, bool exportDebugImg = false)
+        public static Vector3[] GetLinePickingPoints(Vector2 uv, GameObject radargramMesh, string radargramImgName, Vector3 hitNormal, int sampleRate = 1, bool exportDebugImg = false)
         {
             // Get the texture from the mesh renderer's material
-            MeshRenderer meshRenderer = curmesh.GetComponent<MeshRenderer>();
+            MeshRenderer meshRenderer = radargramMesh.GetComponent<MeshRenderer>();
             if (meshRenderer == null)
             {
                 Debug.LogError("MeshRenderer component not found on the mesh object");
@@ -122,8 +123,15 @@ namespace LinePicking
                 return Array.Empty<Vector3>();
             }
 
+            FlightlineInfo flightlineInfo = radargramMesh.transform.parent.parent.GetComponentInChildren<FlightlineInfo>();
+            if (flightlineInfo == null)
+            {
+                Debug.LogError("No corresponding flight line object found.");
+                return Array.Empty<Vector3>();
+            }
+
             // Rotate the texture 180 degrees
-            Texture2D texture = TextureUtils.RotateTexture180(originalTexture);
+            Texture2D texture = TextureUtils.ReflectTextureDiagonally(originalTexture);
 
             // Create a debug texture to visualize the brightest pixels
             Texture2D debugTexture = new Texture2D(texture.width, texture.height);
@@ -142,7 +150,7 @@ namespace LinePicking
             int halfWin = windowSize / 2;
 
             // Convert UV coordinates (Unity's bottom-left origin) to image coordinates (top-left origin)
-            int beginX = (int)(w * uv.x);
+            int beginX = w - (int)(w * uv.x);
             int beginY = h - (int)(h * uv.y); // Flip Y coordinate for top-left origin
 
             // Mark the initial picked point on the debug texture
@@ -152,30 +160,88 @@ namespace LinePicking
                 debugTexture.Apply();
             }
 
-            // Calculate the number of samples based on the sample rate
-            int numSamples = (w / sampleRate) + 1;
+            // Get the initial brightness and calculate the brightness gradient
+            byte initialBrightness = TextureUtils.GetPixelBrightness(texture, beginX, beginY);
+
+            bool isFrontFacing = Vector3.Dot(hitNormal, Vector3.forward) > 0f;
+            if (flightlineInfo.isBackwards)
+                isFrontFacing = !isFrontFacing;
+
+            // Calculate the initial brightness gradient (difference between upper and lower pixels)
+            int upperPixelY = Mathf.Clamp(beginY - 1, 0, h - 1);
+            int lowerPixelY = Mathf.Clamp(beginY + 1, 0, h - 1);
+            byte upperBrightness = TextureUtils.GetPixelBrightness(texture, beginX, upperPixelY);
+            byte lowerBrightness = TextureUtils.GetPixelBrightness(texture, beginX, lowerPixelY);
+            int initialGradient = lowerBrightness - upperBrightness;
+
+            // Determine the direction to sample based on whether we're hitting the front or back face
+            int startX, endX, stepX;
+            if (isFrontFacing)
+            {
+                // For front face, go left in texture space (right in world space)
+                startX = beginX;
+                endX = 0;
+                stepX = -sampleRate;
+            }
+            else
+            {
+                // For back face, go right in texture space (left in world space)
+                startX = beginX;
+                endX = w;
+                stepX = sampleRate;
+            }
+
+            // Calculate the number of samples based on the sample rate and direction
+            int numSamples;
+            if (isFrontFacing)
+            {
+                numSamples = beginX / sampleRate + 1;
+            }
+            else
+            {
+                numSamples = (w - beginX) / sampleRate + 1;
+            }
 
             // Initialize arrays for storing coordinates
             Vector2[] uvs = new Vector2[numSamples];
 
-            int maxLocalVal;
-            int maxLocalY;
             int j = 0; // Index for the sampled arrays
 
-            // Process pixels to the right of the picked point with sampling
-            for (int col = beginX; col < w; col += sampleRate)
+            // Process pixels with sampling
+            for (int col = startX; (isFrontFacing && col >= endX) || (!isFrontFacing && col < endX); col += stepX)
             {
-                maxLocalVal = 0;
-                maxLocalY = 0;
+                int closestBrightnessDiff = int.MaxValue;
+                int maxLocalY = beginY;
 
-                // Search in the vertical window for the brightest pixel
+                // Search in the vertical window for the pixel with closest brightness and gradient
                 for (int i = beginY - halfWin; i <= beginY + halfWin; i++)
                 {
                     if (i < 0 || i >= h) continue; // Skip out of bounds
-                    byte g = (byte)(255 * texture.GetPixel(col, i).g);
-                    if (maxLocalVal < g)
+
+                    // Get the brightness of the current pixel
+                    byte g = TextureUtils.GetPixelBrightness(texture, col, i);
+
+                    // Calculate the brightness difference
+                    int brightnessDiff = Math.Abs(g - initialBrightness);
+
+                    // Calculate the gradient at this pixel
+                    int upperY = Mathf.Clamp(i - 1, 0, h - 1);
+                    int lowerY = Mathf.Clamp(i + 1, 0, h - 1);
+                    byte upperG = TextureUtils.GetPixelBrightness(texture, col, upperY);
+                    byte lowerG = TextureUtils.GetPixelBrightness(texture, col, lowerY);
+                    int gradient = lowerG - upperG;
+
+                    // Calculate the gradient difference
+                    int gradientDiff = Math.Abs(gradient - initialGradient);
+
+                    // Combined score that considers both brightness and gradient similarity
+                    // We weight the brightness difference more heavily than the gradient difference
+                    int combinedScore = brightnessDiff + (gradientDiff / 2);
+
+                    // Update the best match if this pixel has a better combined score
+                    if (combinedScore < closestBrightnessDiff)
                     {
-                        maxLocalVal = g;
+                        closestBrightnessDiff = combinedScore;
                         maxLocalY = i;
                     }
                 }
@@ -185,53 +251,13 @@ namespace LinePicking
                 // Mark the detected brightest pixel on the debug texture
                 if (exportDebugImg)
                 {
-                    debugTexture.SetPixel(col, maxLocalY, Color.green);
+                    debugTexture.SetPixel(col, maxLocalY, Color.magenta);
                     debugTexture.Apply();
                 }
 
                 // Convert back to UV coordinates (Unity's bottom-left origin)
-                uvs[j] = new Vector2((float)col / w, 1.0f - (float)maxLocalY / h);
-                j++;
-            }
-
-            // Process pixels to the left of the picked point with sampling
-            beginY = h - (int)(h * uv.y);
-
-            // Start from the sample before the picked point
-            int startCol = beginX - sampleRate;
-            if (startCol % sampleRate != 0)
-            {
-                startCol = beginX - (beginX % sampleRate);
-            }
-
-            for (int col = startCol; col >= 0; col -= sampleRate)
-            {
-                maxLocalVal = 0;
-                maxLocalY = 0;
-
-                // Search in the vertical window for the brightest pixel
-                for (int i = beginY - halfWin; i <= beginY + halfWin; i++)
-                {
-                    if (i < 0 || i >= h) continue; // Skip out of bounds
-                    byte g = (byte)(255 * texture.GetPixel(col, i).g);
-                    if (maxLocalVal < g)
-                    {
-                        maxLocalVal = g;
-                        maxLocalY = i;
-                    }
-                }
-
-                beginY = maxLocalY;
-
-                // Mark the detected brightest pixel on the debug texture
-                if (exportDebugImg)
-                {
-                    debugTexture.SetPixel(col, maxLocalY, Color.green);
-                    debugTexture.Apply();
-                }
-
-                // Convert back to UV coordinates (Unity's bottom-left origin)
-                uvs[j] = new Vector2((float)col / w, 1.0f - (float)maxLocalY / h);
+                // Flip the X coordinate back to match Unity's UV space
+                uvs[j] = new Vector2(1.0f - (float)col / w, 1.0f - (float)maxLocalY / h);
                 j++;
             }
 
@@ -242,13 +268,13 @@ namespace LinePicking
             Vector3[] worldCoords = new Vector3[j];
             for (int i = 0; i < j; i++)
             {
-                worldCoords[i] = UvTo3D(uvs[i], curmesh.GetComponent<MeshFilter>().mesh, curmesh.transform);
+                worldCoords[i] = UvTo3D(uvs[i], radargramMesh.GetComponent<MeshFilter>().mesh, radargramMesh.transform);
             }
 
             // Save the debug texture to a file for inspection
-            TextureUtils.SaveDebugTexture(debugTexture, imgname);
+            TextureUtils.SaveDebugTexture(debugTexture, radargramImgName);
 
-            Debug.Log($"[GetLinePickingPoints] Processed {j} samples with sample rate {sampleRate}");
+            Debug.Log($"[GetLinePickingPoints] Processed {j} samples with sample rate {sampleRate}, direction: {(isFrontFacing ? "right" : "left")} in world space");
             return worldCoords;
         }
     }

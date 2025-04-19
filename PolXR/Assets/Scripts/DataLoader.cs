@@ -275,7 +275,7 @@ public class DataLoader : MonoBehaviour
 
                         MeshCollider bc = radarMesh.AddComponent<MeshCollider>();
                         bc.convex = true;
-                        
+
                         // Attach the Grab Interactable
                         XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
@@ -331,7 +331,7 @@ public class DataLoader : MonoBehaviour
         Debug.Log(radargramMesh.name);
         Debug.Log(radargramMesh.transform);
 
-        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000, 
+        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000,
             radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
         radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
         // radargramMesh.localRotation = Quaternion.identity;
@@ -452,8 +452,15 @@ public class DataLoader : MonoBehaviour
                 }
             }
 
+
             XRSimpleInteractable m_Interactable = lineObj.GetComponent<XRSimpleInteractable>();
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
+
+            Vector3 lineDir = Vector3.Normalize(lineRenderer.GetPosition(lineRenderer.positionCount - 1) - lineRenderer.GetPosition(0));
+            
+            // Backward encoding used to generate line traces in the correct direction
+            FlightlineInfo flightlineInfo = lineObj.AddComponent<FlightlineInfo>();
+            flightlineInfo.isBackwards = Vector3.Dot(lineDir, Vector3.forward) > 0;
 
             return lineObj;
         }
@@ -481,7 +488,7 @@ public class DataLoader : MonoBehaviour
                 child.gameObject.SetActive(!child.gameObject.activeSelf);
 
                 Transform meshChild = child.transform.Find("mesh");
-                
+
                 meshChild.localRotation = Quaternion.identity;
                 meshChild.localPosition = new Vector3(0, 0, 0);
                 meshChild.localScale = Vector3.one;
@@ -530,8 +537,8 @@ public class DataLoader : MonoBehaviour
         }
     }
 
-    void ToggleRadargram(bool arg0) 
-    { 
+    void ToggleRadargram(bool arg0)
+    {
         // TODO
     }
 

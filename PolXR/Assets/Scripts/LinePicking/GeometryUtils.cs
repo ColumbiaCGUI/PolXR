@@ -10,7 +10,7 @@ namespace LinePicking
             Vector2 v2 = p2 - p3;
             return (v1.x * v2.y - v1.y * v2.x) / 2;
         }
-        
+
         public static Vector3 ClosestPointOnTriangle(Vector3 point, Vector3 a, Vector3 b, Vector3 c)
         {
             // Check if point is in vertex region outside A
