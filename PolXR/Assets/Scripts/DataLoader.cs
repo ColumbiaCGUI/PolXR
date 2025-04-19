@@ -275,7 +275,7 @@ public class DataLoader : MonoBehaviour
 
                         MeshCollider bc = radarMesh.AddComponent<MeshCollider>();
                         bc.convex = true;
-
+                        
                         // Attach the Grab Interactable
                         XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
