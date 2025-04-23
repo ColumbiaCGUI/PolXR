@@ -8,6 +8,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 511119904, guid: 477f02bca0b59924aa984e240cb28cc4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 623695491, guid: 477f02bca0b59924aa984e240cb28cc4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 805470276, guid: 477f02bca0b59924aa984e240cb28cc4, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -185,7 +193,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 2484170574470442022}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2549000074096746600}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3a511e1a014b64418459b0fa78cd207, type: 3}
   m_Name: 
@@ -196,7 +204,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 2484170574470442022}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2549000074207914338}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3a511e1a014b64418459b0fa78cd207, type: 3}
   m_Name: 

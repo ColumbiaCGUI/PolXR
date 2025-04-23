@@ -55,12 +55,13 @@ namespace Fusion.Addons.ConnectionManagerAddon
         [Header("Local user spawner")]
         public NetworkObject userPrefab;
 
-#region IUserSpawner
-        public NetworkObject UserPrefab { 
+        #region IUserSpawner
+        public NetworkObject UserPrefab
+        {
             get => userPrefab;
             set => userPrefab = value;
         }
-#endregion
+        #endregion
 
         [Header("Event")]
         public UnityEvent onWillConnect = new UnityEvent();
@@ -155,18 +156,19 @@ namespace Fusion.Addons.ConnectionManagerAddon
             if (sceneManager == null) sceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>();
             if (onWillConnect != null) onWillConnect.Invoke();
 
-            // Original Code: Uses default Object Provider
-            //// Start or join (depends on gamemode) a session with a specific name
-            //var args = new StartGameArgs()
-            //{
-            //    GameMode = gameMode,
-            //    Scene = CurrentSceneInfo(),
-            //    SceneManager = sceneManager
-            //};
-            // CTL Team Change: Use customized Object Provider instead of fallback to default one
+            // Ensure BakingObjectProvider exists on the runner GameObject
+            var objectProvider = runner.GetComponent<BakingObjectProvider>();
+            if (objectProvider == null)
+            {
+                Debug.LogError($"[ConnectionManager] BakingObjectProvider component not found on the NetworkRunner GameObject ({runner.gameObject.name}). Make sure it's added.", runner.gameObject);
+                // Handle the error appropriately - perhaps return or throw an exception?
+                // Returning here prevents starting the game without the required provider.
+                return;
+            }
+
             var args = new StartGameArgs()
             {
-                ObjectProvider = new BakingObjectProvider(),
+                ObjectProvider = objectProvider,
                 GameMode = gameMode,
                 Scene = CurrentSceneInfo(),
                 SceneManager = sceneManager
@@ -202,14 +204,15 @@ namespace Fusion.Addons.ConnectionManagerAddon
             }
         }
 
-#region Player spawn
+        #region Player spawn
         public void OnPlayerJoinedSharedMode(NetworkRunner runner, PlayerRef player)
         {
             if (player == runner.LocalPlayer && userPrefab != null)
             {
                 // Spawn the user prefab for the local user
                 Debug.Log("OnPlayerJoinedSharedMode");
-                NetworkObject networkPlayerObject = runner.Spawn(userPrefab, position: transform.position, rotation: transform.rotation, player, (runner, obj) => {
+                NetworkObject networkPlayerObject = runner.Spawn(userPrefab, position: transform.position, rotation: transform.rotation, player, (runner, obj) =>
+                {
                 });
             }
         }
@@ -232,7 +235,8 @@ namespace Fusion.Addons.ConnectionManagerAddon
                 {
                     //gameObject.AddComponent<DataLoader>();
                     //dataLoader = gameObject.GetComponent<DataLoader>();
-                    NetworkObject DEMsNetwork = runner.Spawn(DEMsPrefab, position: new Vector3(0, 0, 0), rotation: new Quaternion(0, 0, 0, 0), inputAuthority: player, (runner, obj) => {
+                    NetworkObject DEMsNetwork = runner.Spawn(DEMsPrefab, position: new Vector3(0, 0, 0), rotation: new Quaternion(0, 0, 0, 0), inputAuthority: player, (runner, obj) =>
+                    {
                     });
                     Debug.Log("Spawned DEMs with Player " + player.PlayerId);
 
@@ -248,7 +252,8 @@ namespace Fusion.Addons.ConnectionManagerAddon
                 // CTL comment: After spawning the old rig prefab, the program no longer executes.
 
                 // We make sure to give the input authority to the connecting player for their user's object
-                NetworkObject networkPlayerObject = runner.Spawn(userPrefab, position: transform.position, rotation: transform.rotation, inputAuthority: player, (runner, obj) => {
+                NetworkObject networkPlayerObject = runner.Spawn(userPrefab, position: transform.position, rotation: transform.rotation, inputAuthority: player, (runner, obj) =>
+                {
                 });
 
                 // Keep track of the player avatars so we can remove it when they disconnect
@@ -267,9 +272,9 @@ namespace Fusion.Addons.ConnectionManagerAddon
             }
         }
 
-#endregion
+        #endregion
 
-#region INetworkRunnerCallbacks
+        #region INetworkRunnerCallbacks
         public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
         {
             if (runner.Topology == Topologies.ClientServer)
@@ -281,7 +286,8 @@ namespace Fusion.Addons.ConnectionManagerAddon
                 OnPlayerJoinedSharedMode(runner, player);
             }
         }
-        public void OnPlayerLeft(NetworkRunner runner, PlayerRef player) {
+        public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+        {
             if (runner.Topology == Topologies.ClientServer)
             {
                 OnPlayerLeftHostMode(runner, player);
@@ -299,7 +305,8 @@ namespace Fusion.Addons.ConnectionManagerAddon
         }
 
         // CTL Networking
-        public void OnInput(NetworkRunner runner, NetworkInput input) {
+        public void OnInput(NetworkRunner runner, NetworkInput input)
+        {
             var data = new NetworkInputData();
 
             if (Input.GetKey(KeyCode.W))
@@ -363,7 +370,8 @@ namespace Fusion.Addons.ConnectionManagerAddon
         #endregion
 
         #region INetworkRunnerCallbacks (debug log only)
-        public void OnConnectedToServer(NetworkRunner runner) {
+        public void OnConnectedToServer(NetworkRunner runner)
+        {
             Debug.Log("OnConnectedToServer");
 
         }
@@ -371,15 +379,17 @@ namespace Fusion.Addons.ConnectionManagerAddon
         {
             Debug.Log("Shutdown: " + shutdownReason);
         }
-        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) {
-            Debug.Log("OnDisconnectedFromServer: "+ reason);
+        public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
+        {
+            Debug.Log("OnDisconnectedFromServer: " + reason);
         }
-        public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) {
+        public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
+        {
             Debug.Log("OnConnectFailed: " + reason);
         }
-#endregion
+        #endregion
 
-#region Unused INetworkRunnerCallbacks 
+        #region Unused INetworkRunnerCallbacks 
 
         public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
@@ -387,13 +397,13 @@ namespace Fusion.Addons.ConnectionManagerAddon
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
         public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
         public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
-        public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey reliableKey, ArraySegment<byte> data){}
-        public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey reliableKey, float progress){}
+        public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey reliableKey, ArraySegment<byte> data) { }
+        public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey reliableKey, float progress) { }
         public void OnSceneLoadDone(NetworkRunner runner) { }
         public void OnSceneLoadStart(NetworkRunner runner) { }
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
         public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-#endregion
+        #endregion
     }
 
 }

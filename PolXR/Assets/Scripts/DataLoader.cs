@@ -10,6 +10,7 @@ using UnityEngine.XR.Interaction.Toolkit.Samples.Hands;
 using UnityEngine.XR.Interaction.Toolkit.Transformers;
 using Fusion;
 //using Fusion;
+using System.Collections; // Needed for Coroutines
 
 
 [System.Serializable]
@@ -27,8 +28,11 @@ public class MetaData
 }
 
 
+[DefaultExecutionOrder(DataLoader.EXECUTION_ORDER)]
 public class DataLoader : MonoBehaviour
 {
+    public const int EXECUTION_ORDER = 99;
+
     public string demDirectoryPath;
     public List<string> flightlineDirectories;
     private Shader radarShader;
@@ -37,7 +41,26 @@ public class DataLoader : MonoBehaviour
     private GameObject radarMenu;
     private GameObject mainMenu;
 
-    // public NetworkRunner runner;
+    // Add NetworkRunner field
+    public NetworkRunner runner;
+
+    // Directory containing flight line data
+    public string flightlineBaseDirectory = "Assets/AppData/Flightlines";
+
+    // Shader for the radargram material
+    public Shader radargramShader;
+
+    // List to hold loaded DEM GameObjects
+    public List<GameObject> dems = new List<GameObject>();
+
+    // Reference to the DEM shader
+    public Shader demShader;
+
+    // Scale factor for DEMs
+    public float demScaleFactor = 0.01f;
+
+    // Flag to prevent spawning multiple times
+    private bool _spawnedFlightlines = false;
 
     public Vector3 GetDEMCentroid()
     {
@@ -96,6 +119,8 @@ public class DataLoader : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("[DataLoader] Start called.");
+
         radarMenu = GameObject.Find("RadarMenu");
         mainMenu = GameObject.Find("MainMenu");
 
@@ -132,12 +157,23 @@ public class DataLoader : MonoBehaviour
         // Process DEMs
         ProcessDEMs(demContainer);
 
-        // Process Flightlines
-        foreach (string flightlineDirectory in flightlineDirectories)
+        // Try to find the runner if not assigned in Inspector
+        if (runner == null)
         {
-            ProcessFlightlines(flightlineDirectory, radarContainer);
-            // Debug.LogError(flightlineDirectory);
+            Debug.Log("[DataLoader] Runner not assigned in inspector, attempting to find it...");
+            runner = FindAnyObjectByType<NetworkRunner>();
+            if (runner == null)
+            {
+                Debug.LogWarning("[DataLoader] Could not find NetworkRunner in the scene during Start. Will keep trying in coroutine.");
+            }
+            else
+            {
+                Debug.Log("[DataLoader] Found NetworkRunner in the scene.");
+            }
         }
+
+        // Start the coroutine to wait for the runner and then spawn flightlines
+        StartCoroutine(SpawnFlightlinesWhenReady());
 
         // Set Toggle Functionality
         SetTogglesForMenus();
@@ -145,25 +181,11 @@ public class DataLoader : MonoBehaviour
         // Set Button Functionality
         SetButtonsForMenus();
 
-        DisableAllRadarObjects(radarContainer);
-
-
         DisableMenus();
+
+        Debug.Log("[DataLoader] Start finished, coroutine initiated.");
     }
 
-    private void DisableAllRadarObjects(GameObject radarContainer)
-    {
-        foreach (Transform segment in radarContainer.transform)
-        {
-            foreach (Transform child in segment)
-            {
-                if (child.name.StartsWith("Data")) // Radar objects start with "Data"
-                {
-                    child.gameObject.SetActive(false); // Disable radar objects
-                }
-            }
-        }
-    }
     private void ProcessDEMs(GameObject parent)
     {
         Debug.Log("DataLoader Process DEMs called!");
@@ -206,310 +228,6 @@ public class DataLoader : MonoBehaviour
                 ScaleAndRotate(demObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
                 demObj.transform.SetParent(parent.transform);
-
-
-            }
-        }
-    }
-
-    private void ProcessFlightlines(string flightlineDirectory, GameObject parent)
-    {
-        string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
-        foreach (string segmentFolder in segmentFolders)
-        {
-            string segmentName = Path.GetFileName(segmentFolder);
-
-            // Create a container for the segment (e.g., 001, 002)
-            GameObject segmentContainer = CreateChildGameObject(segmentName, parent.transform);
-
-            // Process all .obj files in this segment
-            string[] objFiles = Directory.GetFiles(segmentFolder, "*.obj");
-            foreach (string objFile in objFiles)
-            {
-                string fileName = Path.GetFileName(objFile);
-                GameObject lineObj = null;
-
-                if (fileName.StartsWith("FlightLine"))
-                {
-                    // Create LineRenderer for Flightline
-                    lineObj = CreateLineRenderer(objFile, segmentContainer);
-                    int RadarGramLayer = LayerMask.NameToLayer("Radargram");
-                    lineObj.layer = RadarGramLayer;
-                }
-                else if (fileName.StartsWith("Data"))
-                {
-                    GameObject radarObj = LoadObj(objFile);
-
-                    if (radarObj != null)
-                    {
-                        ScaleAndRotate(radarObj, 0.0001f, 0.0001f, 0.001f, -90f);
-
-                        // Find and texture the Radar object's mesh
-                        Transform meshChild = radarObj.transform.Find("mesh");
-                        if (meshChild != null)
-                        {
-                            string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
-                            if (File.Exists(texturePath))
-                            {
-                                Texture2D texture = LoadTexture(texturePath);
-                                Material material = CreateRadarMaterial(texture);
-                                ApplyMaterial(meshChild.gameObject, material);
-                            }
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"Radar object '{radarObj.name}' does not have a child named 'mesh'.");
-                        }
-
-                        // Parent the Radar object to the segment container
-                        radarObj.transform.SetParent(segmentContainer.transform);
-
-                        // Add necessary components to the Radar object
-
-                        // Attach the Box Collider
-                        GameObject radarMesh = meshChild.gameObject;
-
-                        //BoxCollider bc = radarMesh.AddComponent<BoxCollider>();
-                        //Vector3 meshExtents = radarMesh.GetComponentInChildren<MeshRenderer>().bounds.extents;
-                        //bc.size = new Vector3(meshExtents.x, meshExtents.y, meshExtents.z);
-                        //Debug.Log(bc.size);
-
-                        MeshCollider bc = radarMesh.AddComponent<MeshCollider>();
-                        bc.convex = true;
-
-                        // Attach the Grab Interactable
-                        XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
-                        IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
-                        // Add Rotation Constraints for Y Axis Only
-                        IradarObj.movementType = XRBaseInteractable.MovementType.Instantaneous;
-                        //IradarObj.trackPosition = true;
-                        //IradarObj.trackRotation = false;
-                        // IradarObj.trackScale = false;
-                        IradarObj.throwOnDetach = false;
-                        //IradarObj.matchAttachRotation = false;
-                        IradarObj.useDynamicAttach = true;
-
-                        radarObj.GetComponent<Rigidbody>().useGravity = false;
-                        radarObj.GetComponent<Rigidbody>().isKinematic = false;
-                        // radarObj.GetComponent<Rigidbody>().freezeRotation = false;
-
-                        // LockObj.canProcess = true;
-
-                        IradarObj.firstSelectEntered.AddListener(ConvertRadargramToWorld);
-                        // IradarObj.lastSelectExited.AddListener(ResetRadargram);
-
-                        //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
-                        //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
-
-                        // Add NetworkedObjectManipulator
-
-
-                        // Set layer
-                        int RadarGramLayer = LayerMask.NameToLayer("Radargram");
-                        radarMesh.layer = RadarGramLayer;
-                    }
-                }
-            }
-        }
-    }
-
-    void ConvertRadargramToWorld(SelectEnterEventArgs args)
-    {
-        // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
-
-        Transform meshTransform = component.transform;
-        Debug.Log(meshTransform.name);
-
-    }
-
-    // Need to reset Radargram interactable back to position 0,0,0, rotation 0,0,0, scale 1,1,1
-    void ResetRadargram(SelectExitEventArgs args)
-    {
-        // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
-
-        Transform radargramMesh = component.transform;
-        Debug.Log(radargramMesh.name);
-        Debug.Log(radargramMesh.transform);
-
-        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000,
-            radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
-        radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
-        // radargramMesh.localRotation = Quaternion.identity;
-        // radargramMesh.localPosition = new Vector3(0, 0, 0);
-        radargramMesh.localScale = Vector3.one; // TODO : Needs to be changed if radargram is scaled
-    }
-
-    void OpenRadarMenu(SelectExitEventArgs args)
-    {
-        // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
-
-        Transform radargramMesh = component.transform;
-        Debug.Log(radargramMesh.name);
-        Debug.Log(radargramMesh.transform);
-
-        mainMenu.SetActive(false);
-        radarMenu.SetActive(true);
-    }
-
-
-    // CTL Networking
-    private GameObject LoadObj(string objPath)
-    //private NetworkObject LoadObj(string objPath)
-    {
-        GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
-        if (importedObj == null)
-        {
-            Debug.LogError($"Failed to load OBJ: {objPath}");
-            return null;
-        }
-        return Instantiate(importedObj);
-    }
-
-    private Texture2D LoadTexture(string texturePath)
-    {
-        byte[] fileData = File.ReadAllBytes(texturePath);
-        Texture2D texture = new Texture2D(2, 2);
-        texture.LoadImage(fileData);
-        return texture;
-    }
-
-    private Material CreateRadarMaterial(Texture2D texture)
-    {
-        Material material = new Material(radarShader);
-        material.SetTexture("_MainTex", texture);
-        material.SetFloat("_Glossiness", 0f);
-        return material;
-    }
-
-    private void ApplyMaterial(GameObject obj, Material material)
-    {
-        Renderer renderer = obj.GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            renderer.material = material;
-        }
-    }
-
-    private GameObject CreateLineRenderer(string objPath, GameObject parentContainer)
-    {
-        string[] lines = File.ReadAllLines(objPath);
-        List<Vector3> vertices = new List<Vector3>();
-
-        int vertexCount = lines.Count(line => line.StartsWith("v "));
-
-        int sampleRate = Mathf.Max(1, vertexCount / 20);
-
-        int index = 0;
-        foreach (string line in lines)
-        {
-            if (line.StartsWith("v "))
-            {
-                if (index % sampleRate == 0)
-                {
-                    string[] parts = line.Split(' ');
-                    float x = float.Parse(parts[1]) * 0.0001f;
-                    float y = float.Parse(parts[3]) * 0.001f;
-                    float z = float.Parse(parts[2]) * 0.0001f;
-
-                    vertices.Add(new Vector3(x, y, z));
-                }
-                index++;
-            }
-        }
-
-        if (vertices.Count > 1)
-        {
-            // Rotate the vertices manually by 180 degrees around the global origin
-            List<Vector3> rotatedVertices = RotateVertices(vertices, 180);
-
-            // Create a GameObject for the LineRenderer
-            GameObject lineObj = CreateChildGameObject("Flightline", parentContainer.transform);
-
-            // Add LineRenderer component
-            LineRenderer lineRenderer = lineObj.AddComponent<LineRenderer>();
-            lineRenderer.positionCount = rotatedVertices.Count;
-            lineRenderer.SetPositions(rotatedVertices.ToArray());
-
-            // Set RadarShader and material properties
-            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.material.color = Color.black;
-            lineRenderer.material.SetFloat("_Glossiness", 0f);
-            lineRenderer.startWidth = 0.1f;
-            lineRenderer.endWidth = 0.1f;
-
-            // Add a MeshCollider to the LineRenderer
-            AttachBoxColliders(lineObj, rotatedVertices.ToArray());
-
-            // Add a click handler
-            foreach (Transform child in parentContainer.transform)
-            {
-                if (child.name.StartsWith("Flightline"))
-                {
-
-                    lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
-                    NetworkObject no = lineObj.GetComponent<NetworkObject>();
-                    // Allow state authority override on the network object
-                    if (no != null)
-                    {
-                        no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
-                    }
-
-                    break;
-                }
-            }
-
-            NetworkedObjectSimpleInteractable m_Interactable = lineObj.GetComponent<NetworkedObjectSimpleInteractable>();
-            m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
-
-            return lineObj;
-        }
-        else
-        {
-            Debug.LogWarning($"No vertices found in flightline .obj file: {objPath}");
-            return null;
-        }
-    }
-
-    void TogglePolyline(SelectEnterEventArgs args)
-    {
-        // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
-
-        Transform flightlineContainer = component.transform.parent.transform;
-        Debug.Log(flightlineContainer.name);
-
-        foreach (Transform child in flightlineContainer)
-        {
-            if (child.name.StartsWith("Data"))
-            {
-                Debug.Log(child.name);
-                child.gameObject.SetActive(!child.gameObject.activeSelf);
-
-                Transform meshChild = child.transform.Find("mesh");
-
-                meshChild.localRotation = Quaternion.identity;
-                meshChild.localPosition = new Vector3(0, 0, 0);
-                meshChild.localScale = Vector3.one;
-            }
-            else if (child.name.StartsWith("Flightline"))
-            {
-                if (child.gameObject.GetComponent<LineRenderer>().material.color == Color.black)
-                {
-                    child.gameObject.GetComponent<LineRenderer>().material.color = Color.green;
-                    radarMenu.SetActive(true);
-                }
-                else
-                {
-                    child.gameObject.GetComponent<LineRenderer>().material.color = Color.black;
-                    radarMenu.SetActive(false);
-                }
             }
         }
     }
@@ -528,28 +246,20 @@ public class DataLoader : MonoBehaviour
 
     void ToggleFlightlines(bool arg0)
     {
-        Transform radar = GameObject.Find("Managers/DataLoader/Radar").transform;
-
-        foreach (Transform child in radar)
-        {
-            foreach (Transform child2 in child)
-            {
-                if (child2.name.StartsWith("Flightline"))
-                {
-                    child2.gameObject.SetActive(arg0);
-                }
-            }
-        }
+        // TODO: Update to find networked objects
+        Debug.Log("ToggleFlightlines method needs to be updated to work with networked objects");
     }
 
     void ToggleRadargram(bool arg0)
     {
-        // TODO
+        // TODO: Update to find networked objects
+        Debug.Log("ToggleRadargram method needs to be updated to work with networked objects");
     }
 
     void ResetRadargram()
     {
-        // TODO
+        // TODO: Update to work with networked objects
+        Debug.Log("ResetRadargram method needs to be updated to work with networked objects");
     }
 
     void OpenHome()
@@ -560,7 +270,8 @@ public class DataLoader : MonoBehaviour
 
     void GoToRadargram()
     {
-        // TODO
+        // TODO: Update to work with networked objects
+        Debug.Log("GoToRadargram method needs to be updated to work with networked objects");
     }
 
     void CloseMainMenu()
@@ -591,7 +302,6 @@ public class DataLoader : MonoBehaviour
 
         radarMenuRadargramToggle.onValueChanged.AddListener(ToggleRadargram);
         mainMenuFlightlinesToggle.onValueChanged.AddListener(ToggleFlightlines);
-
     }
 
     private void SetButtonsForMenus()
@@ -623,50 +333,19 @@ public class DataLoader : MonoBehaviour
         mainMenu.SetActive(false);
     }
 
-    private void AttachBoxColliders(GameObject lineObj, Vector3[] vertices)
+    // Keep utility methods used by DEM processing
+    private GameObject LoadObj(string objPath)
     {
-        for (int i = 1; i < vertices.Length; i++)
+        GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
+        if (importedObj == null)
         {
-            // Calculate the line segment
-            Vector3 a = vertices[i - 1];
-            Vector3 b = vertices[i];
-
-            // Add the collider
-            BoxCollider collider = lineObj.AddComponent<BoxCollider>();
-            //collider.isTrigger = false;
-
-            // Set the collider bounds
-            collider.center = (a + b) / 2f;
-            collider.size = new Vector3(
-                Math.Max(Mathf.Abs(a.x - b.x), 0.2f),
-                Math.Max(Mathf.Abs(a.y - b.y), 0.2f),
-                Math.Max(Mathf.Abs(a.z - b.z), 0.2f)
-            );
-
-            // lineObj.GetComponent<XRSimpleInteractable>().colliders.Add(collider);
+            Debug.LogError($"Failed to load OBJ: {objPath}");
+            return null;
         }
-    }
-
-    private List<Vector3> RotateVertices(List<Vector3> vertices, float angleDegrees)
-    {
-        List<Vector3> rotatedVertices = new List<Vector3>();
-
-        // Convert the angle to radians
-        float angleRadians = angleDegrees * Mathf.Deg2Rad;
-
-        // Compute rotation around the global origin
-        foreach (Vector3 vertex in vertices)
-        {
-            float x = vertex.x * Mathf.Cos(angleRadians) - vertex.z * Mathf.Sin(angleRadians);
-            float z = vertex.x * Mathf.Sin(angleRadians) + vertex.z * Mathf.Cos(angleRadians);
-            rotatedVertices.Add(new Vector3(x, vertex.y, z));
-        }
-
-        return rotatedVertices;
+        return Instantiate(importedObj);
     }
 
     private void ScaleAndRotate(GameObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
-    // private void ScaleAndRotate(NetworkObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
     {
         obj.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
         obj.transform.eulerAngles = new Vector3(rotationX, 0f, 0f);
@@ -677,5 +356,118 @@ public class DataLoader : MonoBehaviour
         GameObject obj = new GameObject(name);
         obj.transform.SetParent(parent);
         return obj;
+    }
+
+    // Coroutine to wait for the NetworkRunner and spawn flightlines
+    private IEnumerator SpawnFlightlinesWhenReady()
+    {
+        Debug.Log("[DataLoader Coroutine] Waiting for NetworkRunner...");
+
+        // 1. Wait until the runner exists and is assigned
+        while (runner == null)
+        {
+            Debug.Log("[DataLoader Coroutine] NetworkRunner instance is null, trying to find again...");
+            runner = FindAnyObjectByType<NetworkRunner>(); // Keep trying to find it
+            if (runner == null)
+            {
+                yield return new WaitForSeconds(0.5f); // Wait before checking again
+            }
+            else
+            {
+                Debug.Log("[DataLoader Coroutine] Found NetworkRunner instance.");
+            }
+        }
+
+        // 2. Wait until the runner is Running (adjust state if needed, e.g., Started, ClientJoined)
+        //    Make sure the runner has had a chance to initialize its internal state.
+        yield return new WaitForSeconds(0.1f); // Small initial delay
+        while (runner.State != NetworkRunner.States.Running)
+        {
+            Debug.Log($"[DataLoader Coroutine] Waiting for NetworkRunner to be Running. Current state: {runner.State}");
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        Debug.Log($"[DataLoader Coroutine] NetworkRunner is Running!");
+
+        // 3. Ensure we only spawn once and only if we are the first player
+        if (_spawnedFlightlines)
+        {
+            Debug.Log("[DataLoader Coroutine] Flightlines already marked as spawned, exiting.");
+            yield break; // Already spawned, exit coroutine
+        }
+
+        // --- Spawning Logic ---
+        Debug.Log("[DataLoader Coroutine] Proceeding with Flightline spawning...");
+
+        // Shared Mode: Spawn scene objects only if we are the first player to join.
+        if (runner.ActivePlayers.Count() == 1)
+        {
+            Debug.Log("[DataLoader Coroutine] Active player count is 1. Spawning flightlines...");
+            for (int i = 0; i < flightlineDirectories.Count; i++)
+            {
+                string flightlineDirectory = flightlineDirectories[i];
+                if (Directory.Exists(flightlineDirectory))
+                {
+                    // Generate the custom ID based on the BakingObjectProvider's flag + index
+                    uint customPrefabId = (uint)(BakingObjectProvider.CUSTOM_PREFAB_FLAG + i);
+                    NetworkPrefabId prefabId = new NetworkPrefabId { RawValue = customPrefabId }; // Correctly create NetworkPrefabId
+
+                    Debug.Log($"[DataLoader Coroutine] Requesting spawn for flightline {i} from directory '{flightlineDirectory}' with PrefabId: {prefabId.RawValue}");
+
+                    try
+                    {
+                        // Spawn the object associated with the custom prefab ID
+                        // The BakingObjectProvider should handle the creation based on this ID
+                        runner.Spawn(
+                             prefabId,
+                             position: Vector3.zero, // Or adjust position as needed
+                             rotation: Quaternion.identity, // Or adjust rotation as needed
+                             inputAuthority: PlayerRef.None, // Scene object, no specific player authority
+                             (runner, obj) =>
+                             {
+                                 // This optional callback is executed *after* the object is spawned
+                                 // and *before* Spawned() is called on the object's behaviours.
+                                 // We can pass data here if needed, e.g., the directory path.
+
+                                 // Temporarily comment out until FlightLineAndRadargram compiles correctly
+                                 /*
+                                 var flightLineComponent = obj.GetComponent<FlightLineAndRadargram>();
+                                 if (flightLineComponent != null)
+                                 {
+                                     Debug.Log($"[DataLoader Coroutine OnBeforeSpawned] Setting directory '{flightlineDirectory}' for spawned object {obj.Id}");
+                                     // Pass the directory path *before* Spawned is called on FlightLineAndRadargram
+                                     flightLineComponent.InitializeFromDataLoader(flightlineDirectory, radargramShader);
+                                 }
+                                 else
+                                 {
+                                     Debug.LogWarning($"[DataLoader Coroutine OnBeforeSpawned] Spawned object {obj.Id} does not have a FlightLineAndRadargram component.");
+                                 }
+                                 */
+                                 Debug.LogWarning($"[DataLoader Coroutine OnBeforeSpawned] FlightLineAndRadargram component access temporarily disabled for object {obj.Id}.");
+
+                             }
+                         );
+                        Debug.Log($"[DataLoader Coroutine] Spawn call successful for PrefabId {prefabId.RawValue}.");
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[DataLoader Coroutine] Exception during runner.Spawn for PrefabId {prefabId.RawValue}: {e.Message}\n{e.StackTrace}");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[DataLoader Coroutine] Flightline directory not found, skipping spawn: {flightlineDirectory}");
+                }
+            }
+            _spawnedFlightlines = true; // Mark as spawned after attempting all
+            Debug.Log("[DataLoader Coroutine] Finished spawning flightlines (Player Count == 1).");
+        }
+        else
+        {
+            Debug.Log($"[DataLoader Coroutine] Active player count is {runner.ActivePlayers.Count()}. Skipping flightline spawning.");
+            // Mark as done even if we didn't spawn, to prevent trying again.
+            _spawnedFlightlines = true;
+        }
+        // --- End Spawning Logic ---
     }
 }
