@@ -301,6 +301,7 @@ GameObject:
   - component: {fileID: 395877531}
   - component: {fileID: 395877530}
   - component: {fileID: 395877533}
+  - component: {fileID: 395877534}
   m_Layer: 0
   m_Name: Runner
   m_TagString: Untagged
@@ -377,6 +378,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8edbe7108d8a43ab838cf8b8d9453df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &395877534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 395877529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20d7cff2d39681245804f8832038e7a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DelayIfSceneManagerIsBusy: 1
 --- !u!1001 &397735575
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -769,6 +783,7 @@ GameObject:
   - component: {fileID: 1196559169}
   - component: {fileID: 1196559170}
   - component: {fileID: 1196559171}
+  - component: {fileID: 1196559172}
   m_Layer: 0
   m_Name: Networked Cube
   m_TagString: Untagged
@@ -1112,6 +1127,35 @@ MonoBehaviour:
       m_Calls: []
   extrapolateWhileTakingAuthority: 1
   isTakingAuthority: 0
+--- !u!114 &1196559172
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196559160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4290acb83d51f7448a942794de0756e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localPositionOffset: {x: 0, y: 0, z: 0}
+  localRotationOffset: {x: 0, y: 0, z: 0, w: 0}
+  currentGrabber: {fileID: 0}
+  expectedIsKinematic: 1
+  allowedClosedHandGrabing: 1
+  networkGrabbable: {fileID: 0}
+  rb: {fileID: 0}
+  applyVelocityOnRelease: 0
+  onWillGrab:
+    m_PersistentCalls:
+      m_Calls: []
+  onUngrab:
+    m_PersistentCalls:
+      m_Calls: []
+  onGrab:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1342334985
 GameObject:
   m_ObjectHideFlags: 0
@@ -1286,6 +1330,12 @@ MonoBehaviour:
   demDirectoryPath: Assets/AppData/DEMs\Antarctica
   flightlineDirectories:
   - Assets/AppData/Flightlines\20111119_04
+  runner: {fileID: 0}
+  flightlineBaseDirectory: Assets/AppData/Flightlines
+  radargramShader: {fileID: 0}
+  dems: []
+  demShader: {fileID: 0}
+  demScaleFactor: 0.01
 --- !u!1 &1653810111
 GameObject:
   m_ObjectHideFlags: 0
@@ -18500,6 +18550,7 @@ GameObject:
   - component: {fileID: 8223227746876450759}
   - component: {fileID: 9154497826132014198}
   - component: {fileID: 9154497826132014199}
+  - component: {fileID: 9154497826132014200}
   m_Layer: 0
   m_Name: Left Controller
   m_TagString: Untagged
@@ -18609,6 +18660,21 @@ MonoBehaviour:
   shouldSynchDevicePosition: 1
   updateOnAfterInputSystemUpdate: 1
   side: 0
+--- !u!114 &9154497826132014200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826132014197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26cf04a2efd7a0544a3bc987cca0fda0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabbedObject: {fileID: 0}
+  networkGrabber: {fileID: 0}
+  hoveredGrabbables: []
 --- !u!1 &9154497826408821898
 GameObject:
   m_ObjectHideFlags: 0
@@ -18623,6 +18689,7 @@ GameObject:
   - component: {fileID: 2568630656451986117}
   - component: {fileID: 9154497826408821903}
   - component: {fileID: 9154497826408821904}
+  - component: {fileID: 9154497826408821905}
   m_Layer: 0
   m_Name: Right Controller
   m_TagString: Untagged
@@ -18977,6 +19044,21 @@ MonoBehaviour:
   shouldSynchDevicePosition: 1
   updateOnAfterInputSystemUpdate: 1
   side: 1
+--- !u!114 &9154497826408821905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9154497826408821898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26cf04a2efd7a0544a3bc987cca0fda0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabbedObject: {fileID: 0}
+  networkGrabber: {fileID: 0}
+  hoveredGrabbables: []
 --- !u!1 &9154497826532263976
 GameObject:
   m_ObjectHideFlags: 0
