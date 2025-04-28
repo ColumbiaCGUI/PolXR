@@ -8,6 +8,9 @@ onBoardingDoNotAskAgain = true
 showPackageIndexes = false
 showStatusBar = false
 scopes = {
+	"last_search.310DEAF1" = "t:NetworkGrabbable"
+	"OpenInspectorPreview.310DEAF1" = "0"
+	"currentGroup.310DEAF1" = "all"
 }
 providers = {
 	packages = {
@@ -59,6 +62,14 @@ providers = {
 objectSelectors = {
 }
 recentSearches = [
+	"h: ref"
+	"h: ref=<$object:non"
+	"h: ref=<$object:none$>"
+	"h: r"
+	"h: ref=<$Net"
+	"h: ref=<$N$>"
+	""
+	"networ"
 ]
 searchItemFavorites = [
 ]

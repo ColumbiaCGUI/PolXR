@@ -9,7 +9,8 @@ using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.Samples.Hands;
 using UnityEngine.XR.Interaction.Toolkit.Transformers;
 using Fusion;
-//using Fusion;
+using Fusion.XR.Shared;
+using Fusion.XR.Shared.Grabbing;
 
 
 [System.Serializable]
@@ -446,25 +447,21 @@ public class DataLoader : MonoBehaviour
             // Add a MeshCollider to the LineRenderer
             AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
-            // Add a click handler
-            foreach (Transform child in parentContainer.transform)
+            // Add NetworkedObjectSimpleInteractable to the lineObj itself
+            lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
+            NetworkObject no = lineObj.GetComponent<NetworkObject>();
+            // Allow state authority override on the network object
+            if (no != null)
             {
-                if (child.name.StartsWith("Flightline"))
-                {
-
-                    lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
-                    NetworkObject no = lineObj.GetComponent<NetworkObject>();
-                    // Allow state authority override on the network object
-                    if (no != null)
-                    {
-                        no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
-                    }
-
-                    break;
-                }
+                no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
             }
 
+            // Add NetworkGrabbable component to the lineObj itself
+            lineObj.AddComponent<Grabbable>();
+
+            // Get the interactable component from lineObj
             NetworkedObjectSimpleInteractable m_Interactable = lineObj.GetComponent<NetworkedObjectSimpleInteractable>();
+
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
 
             return lineObj;
