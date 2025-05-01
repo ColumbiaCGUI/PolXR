@@ -509,6 +509,12 @@ MonoBehaviour:
     type: 3}
   pixelsBetweenPoints: 10
   lineColor: {r: 0.2, g: 0.2, b: 1, a: 1}
+  linePickingHorizontalInterval: 20
+  pixelsBetweenLinePoints: 10
+  raycastInterval: 500
+  pointPrefab: {fileID: 8123308171216426184, guid: eb75ed410e300ef49a429626de37686e,
+    type: 3}
+  showDebugPoints: 0
 --- !u!114 &713289717
 MonoBehaviour:
   m_ObjectHideFlags: 0

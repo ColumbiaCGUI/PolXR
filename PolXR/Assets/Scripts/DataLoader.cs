@@ -484,8 +484,8 @@ public class DataLoader : MonoBehaviour
         Debug.Log(radargramMesh.name);
         Debug.Log(radargramMesh.transform);
 
-        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000,
-            radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
+        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / ScaleConstants.UNITY_TO_WORLD_SCALE,
+            radargramMesh.localPosition.y / ScaleConstants.UNITY_TO_WORLD_SCALE, radargramMesh.position.z / 1000);
         radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
         // radargramMesh.localRotation = Quaternion.identity;
         // radargramMesh.localPosition = new Vector3(0, 0, 0);
