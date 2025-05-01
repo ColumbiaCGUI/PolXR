@@ -11,6 +11,7 @@ using UnityEngine.XR.Interaction.Toolkit.Transformers;
 using Fusion;
 using Fusion.XR.Shared;
 using Fusion.XR.Shared.Grabbing;
+using System.Collections; // Added for Coroutine
 
 
 [System.Serializable]
@@ -37,6 +38,9 @@ public class DataLoader : MonoBehaviour
 
     private GameObject radarMenu;
     private GameObject mainMenu;
+
+    // List to store flightline GameObjects before network components are added
+    private List<GameObject> flightlinesToInitialize = new List<GameObject>();
 
     // public NetworkRunner runner;
 
@@ -447,22 +451,8 @@ public class DataLoader : MonoBehaviour
             // Add a MeshCollider to the LineRenderer
             AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
-            // Add NetworkedObjectSimpleInteractable to the lineObj itself
-            lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
-            NetworkObject no = lineObj.GetComponent<NetworkObject>();
-            // Allow state authority override on the network object
-            if (no != null)
-            {
-                no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
-            }
-
-            // Add NetworkGrabbable component to the lineObj itself
-            lineObj.AddComponent<Grabbable>();
-
-            // Get the interactable component from lineObj
-            NetworkedObjectSimpleInteractable m_Interactable = lineObj.GetComponent<NetworkedObjectSimpleInteractable>();
-
-            m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
+            // Add the created lineObj to the list for later initialization
+            flightlinesToInitialize.Add(lineObj);
 
             return lineObj;
         }
@@ -674,5 +664,49 @@ public class DataLoader : MonoBehaviour
         GameObject obj = new GameObject(name);
         obj.transform.SetParent(parent);
         return obj;
+    }
+
+    // Coroutine to initialize network components after a delay
+    private IEnumerator InitializeNetworkComponentsCoroutine()
+    {
+        // Wait until the end of the frame to give NetworkRunner time to initialize
+        yield return new WaitForEndOfFrame();
+
+        Debug.Log($"Initializing network components for {flightlinesToInitialize.Count} flightlines.");
+        foreach (GameObject lineObj in flightlinesToInitialize)
+        {
+            if (lineObj != null)
+            {
+                // Add NetworkedObjectSimpleInteractable to the lineObj itself
+                // NetworkObject is added automatically if not present
+                NetworkedObjectSimpleInteractable m_Interactable = lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
+
+                // Ensure NetworkObject exists and configure it
+                NetworkObject no = lineObj.GetComponent<NetworkObject>();
+                if (no == null) // Should be added by NetworkedObjectSimpleInteractable, but double-check
+                {
+                    no = lineObj.AddComponent<NetworkObject>();
+                    Debug.LogWarning($"NetworkObject manually added to {lineObj.name}. Check if NetworkedObjectSimpleInteractable adds it automatically.");
+                }
+
+                // Allow state authority override on the network object
+                no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
+
+                // Add NetworkGrabbable component (ensure this is the correct Fusion Grabbable)
+                // Assuming Grabbable is the intended component based on Fusion.XR.Shared.Grabbing namespace
+                lineObj.AddComponent<Grabbable>();
+
+                // Add the listener
+                m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
+
+                Debug.Log($"Added network components to {lineObj.name}");
+            }
+            else
+            {
+                Debug.LogWarning("Found a null entry in flightlinesToInitialize list.");
+            }
+        }
+        // Clear the list after initialization
+        flightlinesToInitialize.Clear();
     }
 }
