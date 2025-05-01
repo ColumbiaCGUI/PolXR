@@ -736,7 +736,7 @@ public class DataLoader : MonoBehaviour
                 {
                     Debug.Log($"[DataLoader] OnBeforeSpawned callback for {networkObject.name}");
                     networkObject.transform.SetParent(parent, false);
-                    networkObject.name = objectName;
+                    networkObject.name = "Flightline";
                 }
             );
             // spawnedObject.name = "hello";
