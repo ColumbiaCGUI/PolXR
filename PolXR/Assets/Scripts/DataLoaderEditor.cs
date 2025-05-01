@@ -13,6 +13,9 @@ public class DataLoaderEditor : Editor
         // Ensure serialized properties are updated
         serializedObject.Update();
 
+        // Network Prefab Selection
+        DrawNetworkPrefabSelection(selector);
+
         // DEM Directory Selection
         DrawDEMDirectorySelection(selector);
 
@@ -21,6 +24,19 @@ public class DataLoaderEditor : Editor
 
         // Apply modified properties
         serializedObject.ApplyModifiedProperties();
+    }
+
+    private void DrawNetworkPrefabSelection(DataLoader selector)
+    {
+        EditorGUILayout.BeginVertical("box");
+        EditorGUILayout.LabelField("Network Prefab", EditorStyles.boldLabel);
+
+        // Use a property field to display and edit the flightlinePrefab
+        SerializedProperty flightlinePrefabProperty = serializedObject.FindProperty("flightlinePrefab");
+        EditorGUILayout.PropertyField(flightlinePrefabProperty, new GUIContent("Flightline Prefab"));
+
+        GUILayout.Space(10);
+        EditorGUILayout.EndVertical();
     }
 
     private void DrawDEMDirectorySelection(DataLoader selector)

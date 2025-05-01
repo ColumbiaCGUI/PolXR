@@ -31,6 +31,9 @@ public class MetaData
 
 public class DataLoader : MonoBehaviour
 {
+
+    [SerializeField]
+    public NetworkObject flightlinePrefab;
     public string demDirectoryPath;
     public List<string> flightlineDirectories;
     private Shader radarShader;
@@ -39,8 +42,11 @@ public class DataLoader : MonoBehaviour
     private GameObject radarMenu;
     private GameObject mainMenu;
 
-    // List to store flightline GameObjects before network components are added
-    private List<GameObject> flightlinesToInitialize = new List<GameObject>();
+    // NetworkObject prefab for Flightlines
+
+
+    // Reference to the NetworkRunner
+    private NetworkRunner runner;
 
     // public NetworkRunner runner;
 
@@ -101,6 +107,48 @@ public class DataLoader : MonoBehaviour
 
     void Start()
     {
+        // Find the active NetworkRunner instance in the scene
+        runner = FindObjectOfType<NetworkRunner>();
+        if (runner == null)
+        {
+            Debug.LogError("DataLoader could not find the NetworkRunner!");
+            // We'll continue anyway, but network components won't be added properly
+        }
+        else
+        {
+            Debug.Log($"[DataLoader] Found NetworkRunner: {runner.name}, State: {runner.State}, IsRunning: {runner.IsRunning}");
+        }
+
+        // Check if the flightlinePrefab is properly set up
+        if (flightlinePrefab == null)
+        {
+            Debug.LogError("[DataLoader] flightlinePrefab is null! Please assign it in the inspector.");
+        }
+        else
+        {
+            NetworkObject prefabNetObj = flightlinePrefab.GetComponent<NetworkObject>();
+            if (prefabNetObj == null)
+            {
+                Debug.LogError("[DataLoader] flightlinePrefab does not have a NetworkObject component!");
+            }
+            else
+            {
+                Debug.Log($"[DataLoader] flightlinePrefab NetworkObject valid. Prefab Name: {flightlinePrefab.name}");
+            }
+
+            NetworkedObjectSimpleInteractable interactable = flightlinePrefab.GetComponent<NetworkedObjectSimpleInteractable>();
+            if (interactable == null)
+            {
+                Debug.LogWarning("[DataLoader] flightlinePrefab does not have a NetworkedObjectSimpleInteractable component!");
+            }
+
+            Grabbable grabbable = flightlinePrefab.GetComponent<Grabbable>();
+            if (grabbable == null)
+            {
+                Debug.LogWarning("[DataLoader] flightlinePrefab does not have a Grabbable component!");
+            }
+        }
+
         radarMenu = GameObject.Find("RadarMenu");
         mainMenu = GameObject.Find("MainMenu");
 
@@ -151,7 +199,6 @@ public class DataLoader : MonoBehaviour
         SetButtonsForMenus();
 
         DisableAllRadarObjects(radarContainer);
-
 
         DisableMenus();
     }
@@ -433,11 +480,16 @@ public class DataLoader : MonoBehaviour
             // Rotate the vertices manually by 180 degrees around the global origin
             List<Vector3> rotatedVertices = RotateVertices(vertices, 180);
 
-            // Create a GameObject for the LineRenderer
+            // Create a temporary non-networked object first
             GameObject lineObj = CreateChildGameObject("Flightline", parentContainer.transform);
 
             // Add LineRenderer component
-            LineRenderer lineRenderer = lineObj.AddComponent<LineRenderer>();
+            LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
+            if (lineRenderer == null)
+            {
+                lineRenderer = lineObj.AddComponent<LineRenderer>();
+            }
+
             lineRenderer.positionCount = rotatedVertices.Count;
             lineRenderer.SetPositions(rotatedVertices.ToArray());
 
@@ -451,8 +503,19 @@ public class DataLoader : MonoBehaviour
             // Add a MeshCollider to the LineRenderer
             AttachBoxColliders(lineObj, rotatedVertices.ToArray());
 
-            // Add the created lineObj to the list for later initialization
-            flightlinesToInitialize.Add(lineObj);
+            // Set layer
+            int RadarGramLayer = LayerMask.NameToLayer("Radargram");
+            lineObj.layer = RadarGramLayer;
+
+            // If runner and prefab are available, start a coroutine to spawn a networked version when the runner is ready
+            if (runner != null && flightlinePrefab != null)
+            {
+                StartCoroutine(SpawnNetworkObjectWhenReady(lineObj, parentContainer));
+            }
+            else
+            {
+                Debug.LogWarning($"[DataLoader] Using non-networked flightline because {(runner == null ? "NetworkRunner is null" : "flightlinePrefab is not assigned")}!");
+            }
 
             return lineObj;
         }
@@ -666,47 +729,81 @@ public class DataLoader : MonoBehaviour
         return obj;
     }
 
-    // Coroutine to initialize network components after a delay
-    private IEnumerator InitializeNetworkComponentsCoroutine()
+    private IEnumerator SpawnNetworkObjectWhenReady(GameObject lineObj, GameObject parentContainer)
     {
-        // Wait until the end of the frame to give NetworkRunner time to initialize
-        yield return new WaitForEndOfFrame();
+        // Wait until the runner is in Running state
+        int attempts = 0;
+        int maxAttempts = 20; // Avoid infinite loops
+        float waitTime = 0.5f; // Half-second intervals
 
-        Debug.Log($"Initializing network components for {flightlinesToInitialize.Count} flightlines.");
-        foreach (GameObject lineObj in flightlinesToInitialize)
+        Debug.Log($"[DataLoader] Waiting for NetworkRunner to be in Running state. Current state: {runner.State}");
+
+        while (runner.State != NetworkRunner.States.Running && attempts < maxAttempts)
         {
-            if (lineObj != null)
-            {
-                // Add NetworkedObjectSimpleInteractable to the lineObj itself
-                // NetworkObject is added automatically if not present
-                NetworkedObjectSimpleInteractable m_Interactable = lineObj.AddComponent<NetworkedObjectSimpleInteractable>();
+            yield return new WaitForSeconds(waitTime);
+            attempts++;
+            Debug.Log($"[DataLoader] Waiting for NetworkRunner... Attempt {attempts}/{maxAttempts}. Current state: {runner.State}");
+        }
 
-                // Ensure NetworkObject exists and configure it
-                NetworkObject no = lineObj.GetComponent<NetworkObject>();
-                if (no == null) // Should be added by NetworkedObjectSimpleInteractable, but double-check
+        if (runner.State != NetworkRunner.States.Running)
+        {
+            Debug.LogWarning($"[DataLoader] NetworkRunner still not in Running state after {maxAttempts} attempts. Using non-networked object.");
+            yield break; // Just use the already created non-networked object
+        }
+
+        // Runner is ready, now try to spawn the networked object
+        Debug.Log($"[DataLoader] NetworkRunner is now in Running state. Attempting to spawn network object.");
+
+        try
+        {
+            // Get the current position/rotation/parent so we can match them
+            Vector3 position = lineObj.transform.position;
+            Quaternion rotation = lineObj.transform.rotation;
+            Transform parent = lineObj.transform.parent;
+            string objectName = lineObj.name;
+
+            // Spawn the flightline using NetworkRunner.Spawn
+            NetworkObject spawnedObject = runner.Spawn(
+                flightlinePrefab,
+                position,
+                rotation,
+                PlayerRef.None, // No specific player owns this object
+                onBeforeSpawned: (runner, networkObject) =>
                 {
-                    no = lineObj.AddComponent<NetworkObject>();
-                    Debug.LogWarning($"NetworkObject manually added to {lineObj.name}. Check if NetworkedObjectSimpleInteractable adds it automatically.");
+                    Debug.Log($"[DataLoader] OnBeforeSpawned callback for {networkObject.name}");
+                    networkObject.transform.SetParent(parent, false);
+                    networkObject.name = objectName;
                 }
+            );
 
-                // Allow state authority override on the network object
-                no.Flags |= NetworkObjectFlags.AllowStateAuthorityOverride;
+            Debug.Log($"[DataLoader] Successfully spawned network object: {(spawnedObject != null ? spawnedObject.name : "null")}");
 
-                // Add NetworkGrabbable component (ensure this is the correct Fusion Grabbable)
-                // Assuming Grabbable is the intended component based on Fusion.XR.Shared.Grabbing namespace
-                lineObj.AddComponent<Grabbable>();
-
-                // Add the listener
-                m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
-
-                Debug.Log($"Added network components to {lineObj.name}");
-            }
-            else
+            if (spawnedObject != null)
             {
-                Debug.LogWarning("Found a null entry in flightlinesToInitialize list.");
+                // Get the GameObject reference from the spawned NetworkObject
+                GameObject networkObj = spawnedObject.gameObject;
+
+                // Copy any necessary properties from lineObj to networkObj
+
+                // Add the components if needed
+                NetworkedObjectSimpleInteractable m_Interactable = networkObj.GetComponent<NetworkedObjectSimpleInteractable>();
+                if (m_Interactable != null)
+                {
+                    m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
+
+                    // Destroy the original non-networked object since we've successfully created a networked replacement
+                    Destroy(lineObj);
+                }
+                else
+                {
+                    Debug.LogWarning("[DataLoader] NetworkedObjectSimpleInteractable component not found on the spawned flightline prefab!");
+                }
             }
         }
-        // Clear the list after initialization
-        flightlinesToInitialize.Clear();
+        catch (Exception ex)
+        {
+            Debug.LogError($"[DataLoader] Error spawning network object: {ex.Message}\n{ex.StackTrace}");
+            // Keep using the non-networked object we created initially
+        }
     }
 }

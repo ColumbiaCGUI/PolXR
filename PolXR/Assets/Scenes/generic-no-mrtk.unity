@@ -1085,7 +1085,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1196559160}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 69f071b1ec4ecc141bdcefbdcacecfcb, type: 3}
   m_Name: 
@@ -1241,7 +1241,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1196559160}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4290acb83d51f7448a942794de0756e, type: 3}
   m_Name: 
@@ -1448,7 +1448,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1374328337
 Transform:
   m_ObjectHideFlags: 0
@@ -1476,6 +1476,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71704fcb9c5e44e239e27e8913b6163d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  flightlinePrefab: {fileID: 8039810928953959097, guid: d9a8e0825ccd56b498ab4fad759ebb90, type: 3}
   demDirectoryPath: Assets/AppData/DEMs\Antarctica
   flightlineDirectories:
   - Assets/AppData/Flightlines\20111119_04
