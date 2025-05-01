@@ -106,7 +106,112 @@ namespace LinePicking
             return Vector3.zero;
         }
 
-        public static Vector3[] GetLinePickingPoints(Vector2 uv, GameObject radargramMesh, string radargramImgName, Vector3 hitNormal, int sampleRate = 1, bool exportDebugImg = false)
+        /// Converts a 3D world coordinate to UV coordinates on a mesh
+        public static Vector2 WorldToUV(Vector3 worldPoint, Mesh mesh, Transform transform)
+        {
+            int[] tris = mesh.triangles;
+            Vector2[] uvs = mesh.uv;
+            Vector3[] verts = mesh.vertices;
+
+            for (int i = 0; i < tris.Length; i += 3)
+            {
+                Vector3 v1 = verts[tris[i]];
+                Vector3 v2 = verts[tris[i + 1]];
+                Vector3 v3 = verts[tris[i + 2]];
+
+                Debug.Log(v1 + ", " + v2 + ", " + v3);
+
+                // Calculate triangle area in 3D space
+                Vector3 normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
+                float area = Vector3.Dot(Vector3.Cross(v2 - v1, v3 - v1), normal) / 2f;
+                if (Mathf.Abs(area) < 1e-6f)
+                    continue;
+
+                // Calculate barycentric coordinates in 3D space
+                float a1 = Vector3.Dot(Vector3.Cross(v2 - worldPoint, v3 - worldPoint), normal) / (2f * area);
+                if (a1 < -1e-6f || a1 > 1f + 1e-6f)
+                    continue;
+
+                float a2 = Vector3.Dot(Vector3.Cross(v3 - worldPoint, v1 - worldPoint), normal) / (2f * area);
+                if (a2 < -1e-6f || a2 > 1f + 1e-6f)
+                    continue;
+
+                float a3 = Vector3.Dot(Vector3.Cross(v1 - worldPoint, v2 - worldPoint), normal) / (2f * area);
+                if (a3 < -1e-6f || a3 > 1f + 1e-6f)
+                    continue;
+
+                // Point is inside this triangle - use same barycentric coordinates to interpolate UV
+                Vector2 uv1 = uvs[tris[i]];
+                Vector2 uv2 = uvs[tris[i + 1]];
+                Vector2 uv3 = uvs[tris[i + 2]];
+
+                return a1 * uv1 + a2 * uv2 + a3 * uv3;
+            }
+
+            // Point not found in any triangle
+            return Vector2.zero;
+        }
+
+        public static Vector3 GetPointOnMesh(Vector2 uv, GameObject radargramMesh, string radargramImgName, bool exportDebugImg = false)
+        {
+            // Get the texture from the mesh renderer's material
+            MeshRenderer meshRenderer = radargramMesh.GetComponent<MeshRenderer>();
+            if (meshRenderer == null)
+            {
+                Debug.LogError("MeshRenderer component not found on the mesh object");
+                return Vector3.zero;
+            }
+
+            Texture2D originalTexture = meshRenderer.material.mainTexture as Texture2D;
+            if (originalTexture == null)
+            {
+                Debug.LogError("No texture found on the mesh renderer's material");
+                return Vector3.zero;
+            }
+
+            FlightlineInfo flightlineInfo = radargramMesh.transform.parent.parent.GetComponentInChildren<FlightlineInfo>();
+            if (flightlineInfo == null)
+            {
+                Debug.LogError("No corresponding flight line object found.");
+                return Vector3.zero;
+            }
+
+            // Rotate the texture 180 degrees
+            Texture2D texture = TextureUtils.ReflectTextureDiagonally(originalTexture);
+
+            // Create a debug texture to visualize the brightest pixels
+            Texture2D debugTexture = new Texture2D(texture.width, texture.height);
+            if (exportDebugImg)
+            {
+                Color[] originalPixels = texture.GetPixels();
+                debugTexture.SetPixels(originalPixels);
+                debugTexture.Apply();
+            }
+
+            int h = texture.height;
+            int w = texture.width;
+
+            // Convert UV coordinates (Unity's bottom-left origin) to image coordinates (top-left origin)
+            int beginX = w - (int)(w * uv.x);
+            int beginY = h - (int)(h * uv.y); // Flip Y coordinate for top-left origin
+
+            // Mark the initial picked point on the debug texture
+            if (exportDebugImg)
+            {
+                debugTexture.SetPixel(beginX, beginY, Color.red);
+                debugTexture.Apply();
+            }
+
+            Vector2 pickedPointUV = new Vector2(1.0f - (float)beginX / w, 1.0f - (float)beginY / h);
+            Vector3 point = UvTo3D(pickedPointUV, radargramMesh.GetComponent<MeshFilter>().mesh, radargramMesh.transform);
+
+            // Save the debug texture to a file for inspection
+            TextureUtils.SaveDebugTexture(debugTexture, radargramImgName);
+
+            return point;
+        }
+
+        public static Vector3[] GetLinePickingPoints(Vector2 startUV, Vector2 endUV, GameObject radargramMesh, string radargramImgName, Vector3 hitNormal, int sampleRate = 1, bool exportDebugImg = false)
         {
             // Get the texture from the mesh renderer's material
             MeshRenderer meshRenderer = radargramMesh.GetComponent<MeshRenderer>();
@@ -150,8 +255,11 @@ namespace LinePicking
             int halfWin = windowSize / 2;
 
             // Convert UV coordinates (Unity's bottom-left origin) to image coordinates (top-left origin)
-            int beginX = w - (int)(w * uv.x);
-            int beginY = h - (int)(h * uv.y); // Flip Y coordinate for top-left origin
+            int beginX = w - (int)(w * startUV.x);
+            int beginY = h - (int)(h * startUV.y); // Flip Y coordinate for top-left origin
+
+            int endX = w - (int)(w * endUV.x);
+            int endY = h - (int)(h * endUV.y); // Flip Y coordinate for top-left origin
 
             // Mark the initial picked point on the debug texture
             if (exportDebugImg)
@@ -175,19 +283,19 @@ namespace LinePicking
             int initialGradient = lowerBrightness - upperBrightness;
 
             // Determine the direction to sample based on whether we're hitting the front or back face
-            int startX, endX, stepX;
+            int startX, stepX;
             if (isFrontFacing)
             {
                 // For front face, go left in texture space (right in world space)
                 startX = beginX;
-                endX = 0;
+                // endX = 0; (uncomment if there's no endUV passed in & we want the line to go the remaining distance across the mesh)
                 stepX = -sampleRate;
             }
             else
             {
                 // For back face, go right in texture space (left in world space)
                 startX = beginX;
-                endX = w;
+                // endX = w; (uncomment if there's no endUV passed in & we want the line to go the remaining distance across the mesh)
                 stepX = sampleRate;
             }
 
@@ -210,11 +318,17 @@ namespace LinePicking
             // Process pixels with sampling
             for (int col = startX; (isFrontFacing && col >= endX) || (!isFrontFacing && col < endX); col += stepX)
             {
-                int closestBrightnessDiff = int.MaxValue;
-                int maxLocalY = beginY;
+                // Calculate the target Y position by interpolating between beginY and endY
+                float progress = isFrontFacing ?
+                    (float)(startX - col) / (startX - endX) :
+                    (float)(col - startX) / (endX - startX);
+                int targetY = (int)Mathf.Lerp(beginY, endY, progress);
 
-                // Search in the vertical window for the pixel with closest brightness and gradient
-                for (int i = beginY - halfWin; i <= beginY + halfWin; i++)
+                int closestBrightnessDiff = int.MaxValue;
+                int maxLocalY = targetY;
+
+                // Search in the vertical window around the interpolated target Y position
+                for (int i = targetY - halfWin; i <= targetY + halfWin; i++)
                 {
                     if (i < 0 || i >= h) continue; // Skip out of bounds
 

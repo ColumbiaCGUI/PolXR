@@ -79,10 +79,27 @@ namespace LinePicking
 
             float denominator = d00 * d11 - d01 * d01;
 
+            // Check for near-zero denominator
+            if (Mathf.Abs(denominator) < 1e-6f)
+            {
+                Debug.LogWarning($"Barycentric: Near-zero denominator ({denominator}). This may cause numerical instability.");
+                Debug.LogWarning($"Barycentric: Input points - P:{p}, A:{a}, B:{b}, C:{c}");
+                Debug.LogWarning($"Barycentric: Dot products - d00:{d00}, d01:{d01}, d11:{d11}, d20:{d20}, d21:{d21}");
+                return Vector3.zero;
+            }
+
             float v = (d11 * d20 - d01 * d21) / denominator;
             float w = (d00 * d21 - d01 * d20) / denominator;
+            float u = 1.0f - v - w;
 
-            return new Vector3(1.0f - v - w, v, w);
+            // Check if barycentric coordinates are valid (sum to 1 and all between 0 and 1)
+            if (Mathf.Abs(u + v + w - 1.0f) > 1e-4f || u < -1e-4f || v < -1e-4f || w < -1e-4f)
+            {
+                Debug.LogWarning($"Barycentric: Invalid coordinates (u:{u}, v:{v}, w:{w})");
+                Debug.LogWarning($"Barycentric: Input points - P:{p}, A:{a}, B:{b}, C:{c}");
+            }
+
+            return new Vector3(u, v, w);
         }
     }
 }
