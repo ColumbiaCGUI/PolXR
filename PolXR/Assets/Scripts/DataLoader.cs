@@ -279,14 +279,13 @@ public class DataLoader : MonoBehaviour
             foreach (string objFile in objFiles)
             {
                 string fileName = Path.GetFileName(objFile);
-                GameObject lineObj = null;
+
 
                 if (fileName.StartsWith("FlightLine"))
                 {
                     // Create LineRenderer for Flightline
-                    lineObj = CreateLineRenderer(objFile, segmentContainer);
-                    int RadarGramLayer = LayerMask.NameToLayer("Radargram");
-                    lineObj.layer = RadarGramLayer;
+                    CreateLineRenderer(objFile, segmentContainer);
+
                 }
                 else if (fileName.StartsWith("Data"))
                 {
@@ -448,82 +447,18 @@ public class DataLoader : MonoBehaviour
         }
     }
 
-    private GameObject CreateLineRenderer(string objPath, GameObject parentContainer)
+    private void CreateLineRenderer(string objPath, GameObject parentContainer)
     {
-        string[] lines = File.ReadAllLines(objPath);
-        List<Vector3> vertices = new List<Vector3>();
 
-        int vertexCount = lines.Count(line => line.StartsWith("v "));
-
-        int sampleRate = Mathf.Max(1, vertexCount / 20);
-
-        int index = 0;
-        foreach (string line in lines)
+        if (runner != null && flightlinePrefab != null)
         {
-            if (line.StartsWith("v "))
-            {
-                if (index % sampleRate == 0)
-                {
-                    string[] parts = line.Split(' ');
-                    float x = float.Parse(parts[1]) * 0.0001f;
-                    float y = float.Parse(parts[3]) * 0.001f;
-                    float z = float.Parse(parts[2]) * 0.0001f;
-
-                    vertices.Add(new Vector3(x, y, z));
-                }
-                index++;
-            }
-        }
-
-        if (vertices.Count > 1)
-        {
-            // Rotate the vertices manually by 180 degrees around the global origin
-            List<Vector3> rotatedVertices = RotateVertices(vertices, 180);
-
-            // Create a temporary non-networked object first
-            GameObject lineObj = CreateChildGameObject("Flightline", parentContainer.transform);
-
-            // Add LineRenderer component
-            LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
-            if (lineRenderer == null)
-            {
-                lineRenderer = lineObj.AddComponent<LineRenderer>();
-            }
-
-            lineRenderer.positionCount = rotatedVertices.Count;
-            lineRenderer.SetPositions(rotatedVertices.ToArray());
-
-            // Set RadarShader and material properties
-            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.material.color = Color.black;
-            lineRenderer.material.SetFloat("_Glossiness", 0f);
-            lineRenderer.startWidth = 0.1f;
-            lineRenderer.endWidth = 0.1f;
-
-            // Add a MeshCollider to the LineRenderer
-            AttachBoxColliders(lineObj, rotatedVertices.ToArray());
-
-            // Set layer
-            int RadarGramLayer = LayerMask.NameToLayer("Radargram");
-            lineObj.layer = RadarGramLayer;
-
-            // If runner and prefab are available, start a coroutine to spawn a networked version when the runner is ready
-            if (runner != null && flightlinePrefab != null)
-            {
-                StartCoroutine(SpawnNetworkObjectWhenReady(lineObj, parentContainer));
-            }
-            else
-            {
-                Debug.LogWarning($"[DataLoader] Using non-networked flightline because {(runner == null ? "NetworkRunner is null" : "flightlinePrefab is not assigned")}!");
-            }
-
-            return lineObj;
+            StartCoroutine(SpawnNetworkObjectWhenReady(objPath, parentContainer));
         }
         else
         {
-            Debug.LogWarning($"No vertices found in flightline .obj file: {objPath}");
-            return null;
+            Debug.LogWarning($"[DataLoader] Using non-networked flightline because {(runner == null ? "NetworkRunner is null" : "flightlinePrefab is not assigned")}!");
         }
+
     }
 
     void TogglePolyline(SelectEnterEventArgs args)
@@ -729,7 +664,7 @@ public class DataLoader : MonoBehaviour
         return obj;
     }
 
-    private IEnumerator SpawnNetworkObjectWhenReady(GameObject lineObj, GameObject parentContainer)
+    private IEnumerator SpawnNetworkObjectWhenReady(String objPath, GameObject parentContainer)
     {
         // Wait until the runner is in Running state
         int attempts = 0;
@@ -754,13 +689,42 @@ public class DataLoader : MonoBehaviour
         // Runner is ready, now try to spawn the networked object
         Debug.Log($"[DataLoader] NetworkRunner is now in Running state. Attempting to spawn network object.");
 
-        try
+
+        string[] lines = File.ReadAllLines(objPath);
+        List<Vector3> vertices = new List<Vector3>();
+
+        int vertexCount = lines.Count(line => line.StartsWith("v "));
+
+        int sampleRate = Mathf.Max(1, vertexCount / 20);
+
+        int index = 0;
+        foreach (string line in lines)
         {
-            // Get the current position/rotation/parent so we can match them
-            Vector3 position = lineObj.transform.position;
-            Quaternion rotation = lineObj.transform.rotation;
-            Transform parent = lineObj.transform.parent;
-            string objectName = lineObj.name;
+            if (line.StartsWith("v "))
+            {
+                if (index % sampleRate == 0)
+                {
+                    string[] parts = line.Split(' ');
+                    float x = float.Parse(parts[1]) * 0.0001f;
+                    float y = float.Parse(parts[3]) * 0.001f;
+                    float z = float.Parse(parts[2]) * 0.0001f;
+
+                    vertices.Add(new Vector3(x, y, z));
+                }
+                index++;
+            }
+        }
+
+        if (vertices.Count > 1)
+        {
+            // Rotate the vertices manually by 180 degrees around the global origin
+            List<Vector3> rotatedVertices = RotateVertices(vertices, 180);
+
+            // Create a temporary non-networked object first
+            Vector3 position = parentContainer.transform.position;
+            Quaternion rotation = parentContainer.transform.rotation;
+            Transform parent = parentContainer.transform;
+            string objectName = parentContainer.name;
 
             // Spawn the flightline using NetworkRunner.Spawn
             NetworkObject spawnedObject = runner.Spawn(
@@ -775,35 +739,55 @@ public class DataLoader : MonoBehaviour
                     networkObject.name = objectName;
                 }
             );
+            // spawnedObject.name = "hello";
 
-            Debug.Log($"[DataLoader] Successfully spawned network object: {(spawnedObject != null ? spawnedObject.name : "null")}");
 
-            if (spawnedObject != null)
+            Debug.Log($"[DataLoader] Spawned network object: {spawnedObject.name}");
+
+            GameObject lineObj = spawnedObject.gameObject;
+
+            // Add LineRenderer component
+            LineRenderer lineRenderer = lineObj.GetComponent<LineRenderer>();
+            if (lineRenderer == null)
             {
-                // Get the GameObject reference from the spawned NetworkObject
-                GameObject networkObj = spawnedObject.gameObject;
-
-                // Copy any necessary properties from lineObj to networkObj
-
-                // Add the components if needed
-                NetworkedObjectSimpleInteractable m_Interactable = networkObj.GetComponent<NetworkedObjectSimpleInteractable>();
-                if (m_Interactable != null)
-                {
-                    m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
-
-                    // Destroy the original non-networked object since we've successfully created a networked replacement
-                    Destroy(lineObj);
-                }
-                else
-                {
-                    Debug.LogWarning("[DataLoader] NetworkedObjectSimpleInteractable component not found on the spawned flightline prefab!");
-                }
+                lineRenderer = lineObj.AddComponent<LineRenderer>();
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[DataLoader] Error spawning network object: {ex.Message}\n{ex.StackTrace}");
-            // Keep using the non-networked object we created initially
+
+            lineRenderer.positionCount = rotatedVertices.Count;
+            lineRenderer.SetPositions(rotatedVertices.ToArray());
+
+            // Set RadarShader and material properties
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            lineRenderer.material.color = Color.black;
+            lineRenderer.material.SetFloat("_Glossiness", 0f);
+            lineRenderer.startWidth = 0.1f;
+            lineRenderer.endWidth = 0.1f;
+
+            // Add a MeshCollider to the LineRenderer
+            AttachBoxColliders(lineObj, rotatedVertices.ToArray());
+
+            // Set layer
+            int RadarGramLayer = LayerMask.NameToLayer("Radargram");
+            lineObj.layer = RadarGramLayer;
+
+            NetworkedObjectSimpleInteractable m_Interactable = spawnedObject.GetComponent<NetworkedObjectSimpleInteractable>();
+            if (m_Interactable != null)
+            {
+                m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
+            }
+            else
+            {
+                Debug.LogWarning("[DataLoader] NetworkedObjectSimpleInteractable component not found on the spawned flightline prefab!");
+            }
+
+            // Log the final state of the spawned object
+            Debug.Log($"[DataLoader] Spawned object '{lineObj.name}' final state: " +
+                      $"Parent='{lineObj.transform.parent?.name}', " +
+                      $"Pos={lineObj.transform.position}, " +
+                      $"LocalPos={lineObj.transform.localPosition}, " +
+                      $"Rot={lineObj.transform.rotation.eulerAngles}, " +
+                      $"LocalRot={lineObj.transform.localRotation.eulerAngles}, " +
+                      $"Scale={lineObj.transform.localScale}");
         }
     }
 }
