@@ -1,12 +1,10 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
+using JetBrains.Annotations;
 using UniGLTF.MeshUtility;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 using UnityEngine.XR.Interaction.Toolkit;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -15,20 +13,24 @@ namespace LinePicking
 {
     public class LinePickingPointInfo
     {
-        public Transform hitRadargram;
+        public Transform HitRadargram;
 
-        public Vector2 uvCoordinates;
+        public Vector3 Point;
 
-        public Vector3 hitNormal;
+        public Vector2 UVCoordinates;
 
-        public GameObject debugVisual;
+        public Vector3 HitNormal;
 
-        public GameObject lineVisual;
+        public GameObject DebugVisual;
+
+        public GameObject LineVisual;
     }
     
     public class PickLine : MonoBehaviour
     {
         [SerializeField] private InputActionReference linePickingTrigger;
+
+        [SerializeField] private InputActionReference guidedLinePickingToggle;
 
         [SerializeField] private XRRayInteractor rightControllerRayInteractor;
 
@@ -40,12 +42,13 @@ namespace LinePicking
         
         private Coroutine _continuousLinePickingCoroutine;
 
-        private Dictionary<Vector3, GameObject> _linePointsToGameObjs = new();
         private Dictionary<Vector3, LinePickingPointInfo> _currentLinePickingPoints = new();
+        
+        private List<GameObject> _gameObjectsToCleanup = new();
 
         private Transform _currentRadargram;
 
-        [FormerlySerializedAs("pixelsBetweenPoints")] [Header("Customization")]
+        [Header("Customization")]
         
         //. The amount of pixels between each manually picked point.
         public int linePickingHorizontalInterval = 30;
@@ -60,7 +63,13 @@ namespace LinePicking
         public float raycastInterval;
 
         public GameObject pointPrefab;
+        
+        [Header("Debug")]
+        
         public bool showDebugPoints;
+        
+        // State
+        private bool _isGuidedLinePickingEnabled = true;
 
         private void Start()
         {
@@ -73,12 +82,21 @@ namespace LinePicking
         {
             linePickingTrigger.action.started += OnLinePickStart;
             linePickingTrigger.action.canceled += OnLinePickEnd;
+            
+            guidedLinePickingToggle.action.started += OnGuidedLinePickToggle;
         }
 
         private void OnDisable()
         {
             linePickingTrigger.action.started -= OnLinePickStart;
             linePickingTrigger.action.canceled -= OnLinePickEnd;
+            
+            guidedLinePickingToggle.action.started -= OnGuidedLinePickToggle;
+        }
+
+        private void OnGuidedLinePickToggle(InputAction.CallbackContext context)
+        {  
+            _isGuidedLinePickingEnabled = !_isGuidedLinePickingEnabled;
         }
 
         // On trigger press, mark start of line picking
@@ -88,28 +106,49 @@ namespace LinePicking
 
             _inLinePickingMode = true;
             _currentLinePickingPoints.Clear();
-            _linePointsToGameObjs.Clear();
             _continuousLinePickingCoroutine = StartCoroutine(ContinuousPicking());
         }
+        
+        // On trigger release, mark end of line picking
+        private void OnLinePickEnd(InputAction.CallbackContext context)
+        {
+            if (!_inLinePickingMode || _continuousLinePickingCoroutine == null) return;
+            
+            // If line picking operation was valid, tidy up all the GameObjects we created
+            if (_currentRadargram != null)
+            {
+                GameObject lineParent = new GameObject("Polyline");
+                lineParent.transform.SetParent(_currentRadargram, false);
+                
+                foreach (var linePickingPointInfoKvp in _currentLinePickingPoints)
+                {
+                    var linePickingPointInfo = linePickingPointInfoKvp.Value;
+                    Destroy(linePickingPointInfo.DebugVisual);
+                    linePickingPointInfo.DebugVisual = null;
 
-        public GameObject DrawPickedPointsAsLine(Vector3[] worldCoords, Transform radargramTransform)
+                    if (linePickingPointInfo.LineVisual)
+                        linePickingPointInfo.LineVisual.transform.SetParent(lineParent.transform);
+                }
+            }
+            
+            foreach (var obj in _gameObjectsToCleanup)
+                Destroy(obj);
+            _gameObjectsToCleanup.Clear();
+            
+            EndLinePicking();
+        }
+
+        private GameObject DrawPickedPointsAsLine(Vector3[] worldCoords, Transform radargramTransform)
         {
             List<Vector3> filteredCoords = worldCoords.Where(coord => coord != Vector3.zero).ToList();
             GameObject lineObject = new GameObject("Polyline");
             LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
 
-            // Set LineRenderer properties
             lineRenderer.positionCount = filteredCoords.Count;
-            lineRenderer.startWidth = 0.02f; // Adjust the width as needed
-            lineRenderer.endWidth = 0.02f;   // Adjust the width as needed
-
-            // Set positions for the line
             lineRenderer.SetPositions(filteredCoords.ToArray());
     
             // Set the color of the line using the Unlit/Color shader
-            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.startColor = lineColor;
-            lineRenderer.endColor = lineColor;
+            LineRendererUtils.InitializeLineRenderer(lineRenderer, lineColor);
 
             // Make the drawn line a child of the radargram
             lineObject.transform.SetParent(radargramTransform, false);
@@ -130,26 +169,6 @@ namespace LinePicking
             return lineObject;
         }
 
-        // On trigger release, mark end of line picking
-        private void OnLinePickEnd(InputAction.CallbackContext context)
-        {
-            if (!_inLinePickingMode || _continuousLinePickingCoroutine == null) return;
-            
-            if (_currentRadargram != null)
-            {
-                // Do cleanup here
-                
-                // for each set of line points, use get line picking points method to get line between the two points
-                // = UVHelpers.GetLinePickingPoints(uvCoordinates, meshObj, _currentRadargram.name, raycastHit.normal, pixelsBetweenLinePoints);
-                
-                // at the end, concatenate these lines together
-                
-                // DrawPickedPointsAsLine(_currentLinePickingPoints.ToArray(), _currentRadargram);
-            }
-            
-            EndLinePicking();
-        }
-
         private void EndLinePicking()
         {
             _inLinePickingMode = false;
@@ -159,9 +178,9 @@ namespace LinePicking
         }
 
         private void AddPoint(Vector3 pointToAdd, LinePickingPointInfo info) {
-            GameObject markObj = Instantiate(pointPrefab, pointToAdd, info.hitRadargram.rotation);
-            info.debugVisual = markObj;
-            markObj.transform.parent = info.hitRadargram;
+            GameObject markObj = Instantiate(pointPrefab, pointToAdd, info.HitRadargram.rotation);
+            info.DebugVisual = markObj;
+            markObj.transform.parent = info.HitRadargram;
             markObj.SetActive(showDebugPoints);
             
             // when point is added, draw line from last point to current point if there is a last point
@@ -171,22 +190,47 @@ namespace LinePicking
                 GameObject meshObj = _currentRadargram.GetChild(0).gameObject;
                 
                 // get UV of last line's endpoint
-                Vector2 startUV = lastPoint.uvCoordinates;
-                if (lastPoint.lineVisual)
+                Vector3 lastPointWorld = lastPoint.Point;
+                if (lastPoint.LineVisual)
                 {
-                    LineRenderer lineRenderer = lastPoint.lineVisual.GetComponent<LineRenderer>();
-                    Vector3 lastPointOnPreviousLine = lineRenderer.GetPosition(lineRenderer.positionCount - 1);
-                    startUV = UVHelpers.WorldToUV(lastPointOnPreviousLine, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform);
+                    LineRenderer lineRenderer = lastPoint.LineVisual.GetComponent<LineRenderer>();
+                    lastPointWorld = lineRenderer.GetPosition(lineRenderer.positionCount - 1);
                 }
                 
-                Debug.Log("Picking line from UV: " + startUV + " to " + info.uvCoordinates);
+                if (_isGuidedLinePickingEnabled)
+                {
+                    Vector2 startUV = lastPoint.LineVisual ? UVHelpers.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
+                    Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
+                    info.LineVisual = DrawPickedPointsAsLine(worldCoords, _currentRadargram);
+                }
+                else
+                {
+                    // Make new line segment from last point until new point
+                    info.LineVisual = new GameObject("Polyline section");
+                    LineRenderer lineRenderer = info.LineVisual.AddComponent<LineRenderer>();
 
-                Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(startUV, info.uvCoordinates, meshObj, _currentRadargram.name, info.hitNormal, pixelsBetweenLinePoints);
-                info.lineVisual = DrawPickedPointsAsLine(worldCoords, _currentRadargram);
+                    Vector3 startPoint = _currentRadargram.InverseTransformPoint(lastPointWorld);
+                    Vector3 endPoint = _currentRadargram.InverseTransformPoint(pointToAdd);
+                    lineRenderer.SetPositions(new []{ startPoint, endPoint });
+                    
+                    lineRenderer.transform.SetParent(_currentRadargram, false);
+
+                    LineRendererUtils.InitializeLineRenderer(lineRenderer, lineColor);
+                    
+                    // Now we can safely set useWorldSpace to false
+                    lineRenderer.useWorldSpace = false;
+                }
             }
                 
             _currentLinePickingPoints.Add(pointToAdd, info);
-            _linePointsToGameObjs.Add(pointToAdd, markObj);
+        }
+
+        private void DeactivateLineMarkObject(GameObject obj)
+        {
+            if (!obj) return;
+            
+            obj.SetActive(false);
+            _gameObjectsToCleanup.Add(obj);
         }
 
         private void TryAddLastPoint(Vector3 pointToAdd, Vector3 lastPointPos, LinePickingPointInfo info)
@@ -206,8 +250,9 @@ namespace LinePicking
             if (pointIsFarEnoughFromLastPoint)
             {
                 _currentLinePickingPoints.TryGetValue(lastPointPos, out LinePickingPointInfo pointInfo);
-                pointInfo?.debugVisual?.SetActive(false);
-                pointInfo?.lineVisual?.SetActive(false);
+                
+                DeactivateLineMarkObject(pointInfo?.DebugVisual);
+                DeactivateLineMarkObject(pointInfo?.LineVisual);
                 _currentLinePickingPoints.Remove(lastPointPos);
             }
         }
@@ -237,9 +282,10 @@ namespace LinePicking
                     Vector3 potentialPoint = UVHelpers.GetPointOnMesh(uvCoordinates, meshObj, _currentRadargram.name);
                     
                     LinePickingPointInfo pointInfo = new LinePickingPointInfo();
-                    pointInfo.hitRadargram = _currentRadargram;
-                    pointInfo.uvCoordinates = uvCoordinates;
-                    pointInfo.hitNormal = raycastHit.normal;
+                    pointInfo.Point = potentialPoint;
+                    pointInfo.HitRadargram = _currentRadargram;
+                    pointInfo.UVCoordinates = uvCoordinates;
+                    pointInfo.HitNormal = raycastHit.normal;
 
                     if (_currentLinePickingPoints.Count == 0)
                         AddPoint(potentialPoint, pointInfo);
