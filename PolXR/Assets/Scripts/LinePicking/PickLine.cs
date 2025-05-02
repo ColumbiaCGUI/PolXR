@@ -209,7 +209,7 @@ namespace LinePicking
                     info.LineVisual = new GameObject("Polyline section");
                     LineRenderer lineRenderer = info.LineVisual.AddComponent<LineRenderer>();
 
-                    Vector3 startPoint = _currentRadargram.InverseTransformPoint(lastPointWorld);
+                    Vector3 startPoint = lastPoint.LineVisual ? lastPointWorld : _currentRadargram.InverseTransformPoint(lastPointWorld);
                     Vector3 endPoint = _currentRadargram.InverseTransformPoint(pointToAdd);
                     lineRenderer.SetPositions(new []{ startPoint, endPoint });
                     
