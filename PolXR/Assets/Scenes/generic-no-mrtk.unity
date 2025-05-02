@@ -504,13 +504,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   linePickingTrigger: {fileID: -3109570328498411688, guid: c348712bda248c246b8c49b3db54643f,
     type: 3}
+  guidedLinePickingToggle: {fileID: 6966703523598846124, guid: c348712bda248c246b8c49b3db54643f,
+    type: 3}
   rightControllerRayInteractor: {fileID: 1790617805321227483}
   markObjPrefab: {fileID: 2249673742242929124, guid: 28485aa1aae467049b29ce0959a0a35a,
     type: 3}
   pixelsBetweenPoints: 10
-  lineColor: {r: 0.2, g: 0.2, b: 1, a: 1}
   linePickingHorizontalInterval: 20
   pixelsBetweenLinePoints: 10
+  lineColor: {r: 0.2, g: 0.2, b: 1, a: 1}
   raycastInterval: 500
   pointPrefab: {fileID: 8123308171216426184, guid: eb75ed410e300ef49a429626de37686e,
     type: 3}
