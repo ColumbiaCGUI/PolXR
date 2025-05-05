@@ -344,7 +344,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -511,6 +511,17 @@ MonoBehaviour:
   toggleLinePickingButton: {fileID: -4419376027955073683, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   leftControllerLineVisual: {fileID: 1977042971637731414}
   rightControllerLineVisual: {fileID: 1790617805321227485}
+--- !u!114 &735371360 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7385647743117501659, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+  m_PrefabInstance: {fileID: 1625219986}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &740991663
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -592,6 +603,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4266640295717640281, guid: beb4e2871579447497fe41dfb108e2cd, type: 3}
   m_PrefabInstance: {fileID: 740991663}
   m_PrefabAsset: {fileID: 0}
+--- !u!224 &1016427396 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6520855330095075292, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+  m_PrefabInstance: {fileID: 1625219986}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1016427397 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6073431461739851341, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+  m_PrefabInstance: {fileID: 1625219986}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b743370ac3e4ec2a1668f5455a8ef8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1051785276
 GameObject:
   m_ObjectHideFlags: 0
@@ -857,10 +884,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71704fcb9c5e44e239e27e8913b6163d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  demDirectoryPath: Assets/StreamingAssets/AppData/DEMs\Antarctica
-  player: {fileID: 0}
-  flightlineDirectories:
-  - Assets/StreamingAssets/AppData/Flightlines\20111119_04
+  demDirectoryPath: 
+  flightlineDirectories: []
+  copyComplete: 0
+  sceneSelected: 0
 --- !u!1001 &1625219986
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -873,6 +900,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HomeMenu
       objectReference: {fileID: 0}
+    - target: {fileID: 448055933352159078, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1965402531473342201, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -883,6 +914,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1965402531473342201, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3579118955701059880, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3579118955701059880, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3579118955701059880, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4144082422953760936, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
@@ -936,15 +979,35 @@ PrefabInstance:
     - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: user
       value: 
-      objectReference: {fileID: 9154497826589627400}
+      objectReference: {fileID: 7555960279518514516}
     - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: addButton
       value: 
       objectReference: {fileID: 1625219988}
     - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: dataLoader
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: loadButton
+      value: 
+      objectReference: {fileID: 735371360}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: userCamera
+      value: 
+      objectReference: {fileID: 9154497826589627400}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: demDropdown
+      value: 
+      objectReference: {fileID: 1016427397}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: sceneDropdown
+      value: 
+      objectReference: {fileID: 1016427396}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: dropdownPrefab
       value: 
-      objectReference: {fileID: 1625219990}
+      objectReference: {fileID: 126614950320627730, guid: 2e855cc0f95de5943a3f2e85f033dd36, type: 3}
     - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: initialDropdown
       value: 
@@ -953,6 +1016,18 @@ PrefabInstance:
       propertyPath: dropdownContainer
       value: 
       objectReference: {fileID: 1625219989}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: addFlightlineButton
+      value: 
+      objectReference: {fileID: 1625219988}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: flightlineContainer
+      value: 
+      objectReference: {fileID: 1625219987}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: flightlineEntryPrefab
+      value: 
+      objectReference: {fileID: 1625219990}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -25,15 +25,19 @@ public class MetaData
 
 public class DataLoader : MonoBehaviour
 {
-    public string demDirectoryPath;
-    public GameObject user;
-    public List<string> flightlineDirectories;
+    [HideInInspector] public static DataLoader Instance;
+    [HideInInspector] public string demDirectoryPath;
+    [HideInInspector] public List<string> flightlineDirectories;
     private Shader radarShader;
     private GameObject menu;
-    public bool copyComplete = false;
+    [HideInInspector] public bool copyComplete = false;
+    [HideInInspector] public bool sceneSelected = false;
     private GameObject radarMenu;
     private GameObject mainMenu;
 
+    void Awake(){
+        Instance = this;
+    }
     public Vector3 GetDEMCentroid()
     {
         if (string.IsNullOrEmpty(demDirectoryPath) || !Directory.Exists(demDirectoryPath))
@@ -69,9 +73,9 @@ public class DataLoader : MonoBehaviour
                 Vector3 rotatedCentroid = rotation * centroid;
 
                 Vector3 scaledRotatedCentroid = new Vector3(
-                    -rotatedCentroid.x * 0.0001f,
+                    rotatedCentroid.x * 0.0001f,
                     rotatedCentroid.y * 0.001f,
-                    rotatedCentroid.z * 0.0001f
+                    -rotatedCentroid.z * 0.0001f
                 );
 
                 return scaledRotatedCentroid;
@@ -190,8 +194,6 @@ public class DataLoader : MonoBehaviour
         StartCopyProcess();
 
         StartCoroutine(WaitForCopyAndProcess());
-
-        user.transform.position = GetDEMCentroid();
         
         radarMenu = GameObject.Find("RadarMenu");
         mainMenu = GameObject.Find("MainMenu");
@@ -207,7 +209,7 @@ public class DataLoader : MonoBehaviour
     private IEnumerator WaitForCopyAndProcess()
     {
         // Wait until copying is done (you can use a flag or check directory existence)
-        yield return new WaitUntil(() => copyComplete);
+        yield return new WaitUntil(() => copyComplete && sceneSelected);
 
         // Update paths to point to PersistentDataPath
         demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
@@ -239,7 +241,8 @@ public class DataLoader : MonoBehaviour
         // Process Flightlines
         foreach (string flightlineDirectory in flightlineDirectories)
         {
-            ProcessFlightlines(flightlineDirectory, radarContainer);
+            GameObject flightlineContainer = CreateChildGameObject(Path.GetFileName(flightlineDirectory), radarContainer.transform);
+            ProcessFlightlines(flightlineDirectory, flightlineContainer);
         }
 
         // Set Toggle Functionality
@@ -405,6 +408,8 @@ public class DataLoader : MonoBehaviour
 
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarMesh.layer = RadarGramLayer;
+
+                        radarObj.SetActive(false);
                     }
                 }
             }
