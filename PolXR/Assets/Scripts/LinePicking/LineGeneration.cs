@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace LinePicking
 {
-    public static class UVHelpers
+    public static class LineGeneration
     {
         public static Vector3[] GetGuidedLinePickingPoints(Vector2 startUV, Vector2 endUV, GameObject radargramMesh, string radargramImgName, Vector3 hitNormal, int sampleRate = 1, bool exportDebugImg = false)
         {
@@ -185,6 +185,40 @@ namespace LinePicking
 
             Debug.Log($"[GetLinePickingPoints] Processed {j} samples with sample rate {sampleRate}, direction: {(isFrontFacing ? "right" : "left")} in world space");
             return worldCoords;
+        }
+
+        /// <summary>
+        /// Creates a series of points along a line between two positions on a radargram mesh.
+        /// </summary>
+        /// <param name="startPoint">Starting point in world space</param>
+        /// <param name="endPoint">Ending point in world space</param>
+        /// <param name="radargramMesh">The radargram mesh GameObject</param>
+        /// <param name="interval">Distance between points in world units (meters)</param>
+        /// <returns>Array of Vector3 positions along the line</returns>
+        public static Vector3[] GetUnguidedLinePickingPoints(Vector3 startPoint, Vector3 endPoint, GameObject radargramMesh, float interval = 5f)
+        {
+            Mesh mesh = radargramMesh.GetComponent<MeshFilter>().mesh;
+            Transform transform = radargramMesh.transform;
+
+            // Convert world points to UV coordinates
+            Vector2 startUV = CoordinateUtils.WorldToUV(startPoint, mesh, transform);
+            Vector2 endUV = CoordinateUtils.WorldToUV(endPoint, mesh, transform);
+
+            // We'll use the world distance to determine point count to maintain consistent spacing
+            float worldDistance = Vector3.Distance(startPoint, endPoint);
+            int numPoints = Mathf.Max(2, Mathf.CeilToInt(worldDistance / interval) + 1);
+
+            Vector3[] points = new Vector3[numPoints];
+
+            // Generate evenly spaced points in UV space and convert back to world space
+            for (int i = 0; i < numPoints; i++)
+            {
+                float t = i / (float)(numPoints - 1);
+                Vector2 uvPoint = Vector2.Lerp(startUV, endUV, t);
+                points[i] = CoordinateUtils.UvTo3D(uvPoint, mesh, transform);
+            }
+
+            return points;
         }
     }
 }
