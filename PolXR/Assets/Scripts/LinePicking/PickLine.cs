@@ -153,25 +153,16 @@ namespace LinePicking
                 if (_toggleLinePickingMode.isGuidedLinePickingEnabled)
                 {
                     Vector2 startUV = lastPoint.LineVisual ? CoordinateUtils.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
-                    Vector3[] worldCoords = UVHelpers.GetGuidedLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
+                    Vector3[] worldCoords = LineGeneration.GetGuidedLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
                     info.LineVisual = LinePickUtils.DrawPickedPointsAsLine(worldCoords, _currentRadargram, lineColor);
                 }
                 else
                 {
-                    // Make new line segment from last point until new point
-                    info.LineVisual = new GameObject("Polyline section");
-                    LineRenderer lineRenderer = info.LineVisual.AddComponent<LineRenderer>();
-
                     Vector3 startPoint = lastPoint.LineVisual ? lastPointWorld : _currentRadargram.InverseTransformPoint(lastPointWorld);
                     Vector3 endPoint = _currentRadargram.InverseTransformPoint(pointToAdd);
-                    lineRenderer.SetPositions(new []{ startPoint, endPoint });
-                    
-                    lineRenderer.transform.SetParent(_currentRadargram, false);
 
-                    LineRendererUtils.InitializeLineRenderer(lineRenderer, lineColor);
-                    
-                    // Now we can safely set useWorldSpace to false
-                    lineRenderer.useWorldSpace = false;
+                    Vector3[] points = LineGeneration.GetUnguidedLinePickingPoints(startPoint, endPoint, meshObj, pixelsBetweenLinePoints);
+                    info.LineVisual = LinePickUtils.DrawPickedPointsAsLine(points, _currentRadargram, lineColor);
                 }
             }
                 
@@ -231,8 +222,8 @@ namespace LinePicking
                     GameObject meshObj = _currentRadargram.GetChild(0).gameObject;
 
                     // Approximate UV coordinates from hit position
-                    Vector2 uvCoordinates = UVHelpers.ApproximateUVFromHit(raycastHit.point, meshObj);
-                    Vector3 potentialPoint = UVHelpers.GetPointOnMesh(uvCoordinates, meshObj, _currentRadargram.name);
+                    Vector2 uvCoordinates = RadargramMeshUtils.ApproximateUVFromHit(raycastHit.point, meshObj);
+                    Vector3 potentialPoint = RadargramMeshUtils.GetPointOnRadargramMesh(uvCoordinates, meshObj, _currentRadargram.name);
                     
                     LinePickingPointInfo pointInfo = new LinePickingPointInfo();
                     pointInfo.Point = potentialPoint;
