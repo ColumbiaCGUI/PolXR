@@ -5,6 +5,7 @@ using JetBrains.Annotations;
 using UniGLTF.MeshUtility;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.XR.Interaction.Toolkit;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -47,7 +48,7 @@ namespace LinePicking
         private List<GameObject> _gameObjectsToCleanup = new();
 
         private Transform _currentRadargram;
-
+        
         [Header("Customization")]
         
         //. The amount of pixels between each manually picked point.
@@ -68,9 +69,6 @@ namespace LinePicking
         
         public bool showDebugPoints;
         
-        // State
-        private bool _isGuidedLinePickingEnabled = true;
-
         private void Start()
         {
             BetterStreamingAssets.Initialize();
@@ -95,8 +93,8 @@ namespace LinePicking
         }
 
         private void OnGuidedLinePickToggle(InputAction.CallbackContext context)
-        {  
-            _isGuidedLinePickingEnabled = !_isGuidedLinePickingEnabled;
+        {
+            _toggleLinePickingMode.ToggleGuidedLinePicking();
         }
 
         // On trigger press, mark start of line picking
@@ -197,7 +195,7 @@ namespace LinePicking
                     lastPointWorld = lineRenderer.GetPosition(lineRenderer.positionCount - 1);
                 }
                 
-                if (_isGuidedLinePickingEnabled)
+                if (_toggleLinePickingMode.isGuidedLinePickingEnabled)
                 {
                     Vector2 startUV = lastPoint.LineVisual ? UVHelpers.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
                     Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
