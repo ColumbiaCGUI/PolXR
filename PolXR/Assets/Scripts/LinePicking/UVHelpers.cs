@@ -119,8 +119,6 @@ namespace LinePicking
                 Vector3 v2 = verts[tris[i + 1]];
                 Vector3 v3 = verts[tris[i + 2]];
 
-                Debug.Log(v1 + ", " + v2 + ", " + v3);
-
                 // Calculate triangle area in 3D space
                 Vector3 normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
                 float area = Vector3.Dot(Vector3.Cross(v2 - v1, v3 - v1), normal) / 2f;
