@@ -1,15 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
 using System;
 using System.Linq;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.UI;
-using UnityEngine.XR.Interaction.Toolkit.Samples.Hands;
-using UnityEngine.XR.Interaction.Toolkit.Transformers;
-//using Fusion;
-
+using Dummiesman;
+using UnityEditor;
 
 [System.Serializable]
 public class Centroid
@@ -98,17 +95,15 @@ public class DataLoader : MonoBehaviour
         radarMenu = GameObject.Find("RadarMenu");
         mainMenu = GameObject.Find("MainMenu");
 
-        radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+        radarShader = Resources.Load<Shader>("Shaders/RadarShader");
+
         if (radarShader == null)
         {
-            Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
-            return;
+            Debug.LogError("Failed to load RadarShader from Resources/Shaders/RadarShader. Make sure the shader is in the correct folder and its import settings are valid.");
         }
-
-        if (string.IsNullOrEmpty(demDirectoryPath))
+        else
         {
-            Debug.LogError("DEM directory path is not set!");
-            return;
+            Debug.Log("RadarShader loaded successfully!");
         }
 
         if (flightlineDirectories == null || flightlineDirectories.Count == 0)
@@ -356,7 +351,6 @@ public class DataLoader : MonoBehaviour
 
     // CTL Networking
     private GameObject LoadObj(string objPath)
-    //private NetworkObject LoadObj(string objPath)
     {
         GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
         if (importedObj == null)
@@ -366,6 +360,33 @@ public class DataLoader : MonoBehaviour
         }
         return Instantiate(importedObj);
     }
+    // private GameObject LoadObj(string objPath)
+    // {
+    //     if (!File.Exists(objPath))
+    //     {
+    //         Debug.LogError($"OBJ file does not exist at path: {objPath}");
+    //         return null;
+    //     }
+
+    //     try
+    //     {
+    //         using (FileStream stream = new FileStream(objPath, FileMode.Open))
+    //         {
+    //             GameObject importedObj = new OBJLoader().Load(stream);
+    //             if (importedObj == null)
+    //             {
+    //                 Debug.LogError($"Failed to load OBJ: {objPath}");
+    //                 return null;
+    //             }
+    //             return importedObj;
+    //         }
+    //     }
+    //     catch (System.Exception ex)
+    //     {
+    //         Debug.LogError($"Exception while loading OBJ file at {objPath}: {ex.Message}");
+    //         return null;
+    //     }
+    // }
 
     private Texture2D LoadTexture(string texturePath)
     {
