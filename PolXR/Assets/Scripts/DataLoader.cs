@@ -1,15 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
 using System;
 using System.Linq;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.UI;
-using UnityEngine.XR.Interaction.Toolkit.Samples.Hands;
-using UnityEngine.XR.Interaction.Toolkit.Transformers;
-//using Fusion;
-
+using UnityEngine.Networking;
+using System.Collections;
 
 [System.Serializable]
 public class Centroid
@@ -29,14 +26,13 @@ public class MetaData
 public class DataLoader : MonoBehaviour
 {
     public string demDirectoryPath;
+    public GameObject user;
     public List<string> flightlineDirectories;
     private Shader radarShader;
     private GameObject menu;
-
+    public bool copyComplete = false;
     private GameObject radarMenu;
     private GameObject mainMenu;
-
-    // public NetworkRunner runner;
 
     public Vector3 GetDEMCentroid()
     {
@@ -92,36 +88,145 @@ public class DataLoader : MonoBehaviour
             return Vector3.zero;
         }
     }
+    
+    private void StartCopyProcess()
+    {
+        StartCoroutine(CopyStreamingAssetsToPersistentData());
+    }
 
+    private IEnumerator CopyStreamingAssetsToPersistentData()
+    {
+        string sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
+        string destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
+
+        // Ensure destination directory exists
+        if (!Directory.Exists(destinationPath))
+        {
+            Directory.CreateDirectory(destinationPath);
+        }
+
+        // Get all files and directories to copy
+        yield return StartCoroutine(CopyDirectory(sourcePath, destinationPath));
+
+        Debug.Log("File copying from StreamingAssets to PersistentDataPath completed.");
+
+        copyComplete = true;
+    }
+
+    private IEnumerator CopyDirectory(string sourceDir, string destDir)
+    {
+        // Ensure destination subdirectory exists
+        if (!Directory.Exists(destDir))
+        {
+            Directory.CreateDirectory(destDir);
+        }
+
+        // Handle files in the current directory
+        string[] files = Directory.Exists(sourceDir) ? Directory.GetFiles(sourceDir) : new string[0];
+        foreach (string file in files)
+        {
+            string fileName = Path.GetFileName(file);
+            string sourceFilePath = Path.Combine(sourceDir, fileName);
+            string destFilePath = Path.Combine(destDir, fileName);
+
+            // Read file from StreamingAssets
+            yield return StartCoroutine(ReadFileFromStreamingAssets(sourceFilePath, (data) =>
+            {
+                // Write to PersistentDataPath
+                try
+                {
+                    File.WriteAllBytes(destFilePath, data);
+                    Debug.Log($"Copied file: {fileName} to {destFilePath}");
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Error writing file {fileName} to {destFilePath}: {ex.Message}");
+                }
+            }));
+        }
+
+        // Recursively handle subdirectories
+        string[] subDirs = Directory.Exists(sourceDir) ? Directory.GetDirectories(sourceDir) : new string[0];
+        foreach (string subDir in subDirs)
+        {
+            string subDirName = Path.GetFileName(subDir);
+            string destSubDir = Path.Combine(destDir, subDirName);
+            yield return StartCoroutine(CopyDirectory(subDir, destSubDir));
+        }
+    }
+
+    private IEnumerator ReadFileFromStreamingAssets(string filePath, System.Action<byte[]> onComplete)
+    {
+        string adjustedPath = filePath;
+
+        // Handle platform-specific path for StreamingAssets
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            adjustedPath = "jar:file://" + filePath;
+        }
+        else if (filePath.Contains("://") || filePath.Contains(":///"))
+        {
+            adjustedPath = filePath;
+        }
+
+        using (UnityWebRequest www = UnityWebRequest.Get(adjustedPath))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                onComplete?.Invoke(www.downloadHandler.data);
+            }
+            else
+            {
+                Debug.LogError($"Error reading file {filePath}: {www.error}");
+                onComplete?.Invoke(null);
+            }
+        }
+    }
     void Start()
     {
+        // Start copying files from StreamingAssets to PersistentDataPath
+        StartCopyProcess();
+
+        StartCoroutine(WaitForCopyAndProcess());
+
+        user.transform.position = GetDEMCentroid();
+        
         radarMenu = GameObject.Find("RadarMenu");
         mainMenu = GameObject.Find("MainMenu");
 
-        radarShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/RadarShader.shader");
+        radarShader = Resources.Load<Shader>("Shaders/RadarShader");
         if (radarShader == null)
         {
             Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
             return;
         }
+    }
+
+    private IEnumerator WaitForCopyAndProcess()
+    {
+        // Wait until copying is done (you can use a flag or check directory existence)
+        yield return new WaitUntil(() => copyComplete);
+
+        // Update paths to point to PersistentDataPath
+        demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
+        flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();
 
         if (string.IsNullOrEmpty(demDirectoryPath))
         {
             Debug.LogError("DEM directory path is not set!");
-            return;
         }
 
         if (flightlineDirectories == null || flightlineDirectories.Count == 0)
         {
             Debug.LogError("No Flightline directories selected!");
-            return;
         }
 
         menu = GameObject.Find("Menu");
         if (menu == null)
         {
             Debug.LogError("Menu GameObject not found!");
-            return;
         }
 
         // Create DEM and Radar containers under Template
@@ -135,7 +240,6 @@ public class DataLoader : MonoBehaviour
         foreach (string flightlineDirectory in flightlineDirectories)
         {
             ProcessFlightlines(flightlineDirectory, radarContainer);
-            // Debug.LogError(flightlineDirectory);
         }
 
         // Set Toggle Functionality
@@ -145,11 +249,8 @@ public class DataLoader : MonoBehaviour
         SetButtonsForMenus();
 
         DisableAllRadarObjects(radarContainer);
-
-
         DisableMenus();
     }
-
     private void DisableAllRadarObjects(GameObject radarContainer)
     {
         foreach (Transform segment in radarContainer.transform)
@@ -186,29 +287,30 @@ public class DataLoader : MonoBehaviour
             // Extract the file name without extension (e.g., "bedrock")
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(objFile);
 
-            GameObject demObj = LoadObj(objFile);
+            GameObject demObj = LoadObj(objFile, true);
             if (demObj != null)
             {
                 // Name the GameObject after the .obj file (e.g., "bedrock")
                 demObj.name = fileNameWithoutExtension;
-
                 if (fileNameWithoutExtension.Equals("bedrock", StringComparison.OrdinalIgnoreCase))
                 {
-                    Transform childTransform = demObj.transform.GetChild(0);
-                    Renderer renderer = childTransform.GetComponent<Renderer>();
-                    if (renderer != null)
+                    Renderer[] renderers = demObj.GetComponentsInChildren<Renderer>();
+                    foreach (Renderer renderer in renderers)
                     {
-                        renderer.material.color = Color.Lerp(Color.black, Color.white, 0.25f);
+                        if (renderer != null)
+                        {
+                            renderer.material.color = Color.Lerp(Color.black, Color.white, 0.25f);
+                        }
                     }
                 }
 
                 ScaleAndRotate(demObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
                 demObj.transform.SetParent(parent.transform);
-
-
             }
         }
+        Vector3 localScale = parent.transform.localScale;
+        parent.transform.localScale = new Vector3(localScale.x, localScale.y, localScale.z * -1);
     }
 
     private void ProcessFlightlines(string flightlineDirectory, GameObject parent)
@@ -307,6 +409,8 @@ public class DataLoader : MonoBehaviour
                 }
             }
         }
+        Vector3 localScale = parent.transform.localScale;
+        parent.transform.localScale = new Vector3(localScale.x, localScale.y, localScale.z * -1);
     }
 
     void ConvertRadargramToWorld(SelectEnterEventArgs args)
@@ -320,7 +424,7 @@ public class DataLoader : MonoBehaviour
 
     }
 
-    // Need to reset Radargram interactable back to position 0,0,0, rotation 0,0,0, scale 1,1,1
+    // Reset Radargram interactable back to position 0,0,0, rotation 0,0,0, scale 1,1,1
     void ResetRadargram(SelectExitEventArgs args)
     {
         // Actually toggle the polyline
@@ -355,17 +459,56 @@ public class DataLoader : MonoBehaviour
 
 
     // CTL Networking
-    private GameObject LoadObj(string objPath)
-    //private NetworkObject LoadObj(string objPath)
+    // private GameObject LoadObj(string objPath)
+    // {
+    //     GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
+    //     if (importedObj == null)
+    //     {
+    //         Debug.LogError($"Failed to load OBJ: {objPath}");
+    //         return null;
+    //     }
+    //     return Instantiate(importedObj);
+    // }
+    private GameObject LoadObj(string objPath, bool optimized = false)
     {
-        GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
-        if (importedObj == null)
+        try
         {
-            Debug.LogError($"Failed to load OBJ: {objPath}");
+            // Check if the OBJ file exists
+            if (!File.Exists(objPath))
+            {
+                Debug.LogError($"OBJ file not found: {objPath}");
+                return null;
+            }
+            GameObject loadedObject;
+
+            // Load the OBJ file using Dummiesman OBJLoader
+            if (optimized)
+            {
+                loadedObject = new OptimizedOBJLoader.OBJLoader().Load(objPath);
+            }
+            else
+            {
+                loadedObject = new Dummiesman.OBJLoader().Load(objPath);
+            }
+
+            if (loadedObject == null)
+            {
+                Debug.LogError($"Failed to load OBJ: {objPath}");
+                return null;
+            }
+
+            // Ensure the loaded object has a valid name
+            loadedObject.name = Path.GetFileNameWithoutExtension(objPath);
+            
+            return loadedObject;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to load OBJ: {objPath}. Error: {ex.Message}");
             return null;
         }
-        return Instantiate(importedObj);
     }
+
 
     private Texture2D LoadTexture(string texturePath)
     {
@@ -422,7 +565,7 @@ public class DataLoader : MonoBehaviour
         if (vertices.Count > 1)
         {
             // Rotate the vertices manually by 180 degrees around the global origin
-            List<Vector3> rotatedVertices = RotateVertices(vertices, 180);
+            List<Vector3> rotatedVertices = RotateVertices(vertices, 0);
 
             // Create a GameObject for the LineRenderer
             GameObject lineObj = CreateChildGameObject("Flightline", parentContainer.transform);

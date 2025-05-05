@@ -29,7 +29,7 @@ public class DataLoaderEditor : Editor
         EditorGUILayout.LabelField("DEM Directory", EditorStyles.boldLabel);
 
         // Get immediate subdirectories from Assets/AppData/DEMs
-        string basePath = "Assets/AppData/DEMs";
+        string basePath = "Assets/StreamingAssets/AppData/DEMs";
         string[] demDirs = GetImmediateSubdirectories(basePath);
 
         List<string> demOptions = new List<string>(demDirs);
@@ -64,7 +64,7 @@ public class DataLoaderEditor : Editor
         }
 
         // Get immediate subdirectories from Assets/AppData/Flightlines
-        string basePath = "Assets/AppData/Flightlines";
+        string basePath = "Assets/StreamingAssets/AppData/Flightlines";
         string[] flightlineDirs = GetImmediateSubdirectories(basePath);
 
         List<string> flightlineOptions = new List<string>(flightlineDirs);
