@@ -152,8 +152,8 @@ namespace LinePicking
                 
                 if (_toggleLinePickingMode.isGuidedLinePickingEnabled)
                 {
-                    Vector2 startUV = lastPoint.LineVisual ? UVHelpers.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
-                    Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
+                    Vector2 startUV = lastPoint.LineVisual ? CoordinateUtils.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
+                    Vector3[] worldCoords = UVHelpers.GetGuidedLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
                     info.LineVisual = LinePickUtils.DrawPickedPointsAsLine(worldCoords, _currentRadargram, lineColor);
                 }
                 else
@@ -251,13 +251,6 @@ namespace LinePicking
                         else if (potentialPoint.x < lastPoint.x)
                             TryRemoveLastPoint(potentialPoint, lastPoint);
                     }
-                    
-                    // can i get the cross product of the ray and the mesh
-                    // Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(uvCoordinates, meshObj, _currentRadargram.name, raycastHit.normal, pixelsBetweenLinePoints);
-                    // GameObject markObj = Instantiate(markObjPrefab, raycastHit.point, _currentRadargram.rotation);
-                    // markObj.transform.parent = _currentRadargram;
-
-                    // DrawPickedPointsAsLine(worldCoords, _currentRadargram);
                 }
 
                 yield return new WaitForSeconds(raycastInterval / 1000);
