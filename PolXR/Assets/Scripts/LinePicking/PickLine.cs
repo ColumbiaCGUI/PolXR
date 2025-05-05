@@ -89,6 +89,22 @@ namespace LinePicking
             _currentLinePickingPoints.Clear();
             _continuousLinePickingCoroutine = StartCoroutine(ContinuousPicking());
         }
+
+        private void CleanupLinePickingObjects()
+        {
+            GameObject lineParent = new GameObject("Polyline");
+            lineParent.transform.SetParent(_currentRadargram, false);
+            
+            foreach (var linePickingPointInfoKvp in _currentLinePickingPoints)
+            {
+                var linePickingPointInfo = linePickingPointInfoKvp.Value;
+                Destroy(linePickingPointInfo.DebugVisual);
+                linePickingPointInfo.DebugVisual = null;
+
+                if (linePickingPointInfo.LineVisual)
+                    linePickingPointInfo.LineVisual.transform.SetParent(lineParent.transform);
+            }
+        }
         
         // On trigger release, mark end of line picking
         private void OnLinePickEnd(InputAction.CallbackContext context)
@@ -97,57 +113,13 @@ namespace LinePicking
             
             // If line picking operation was valid, tidy up all the GameObjects we created
             if (_currentRadargram != null)
-            {
-                GameObject lineParent = new GameObject("Polyline");
-                lineParent.transform.SetParent(_currentRadargram, false);
-                
-                foreach (var linePickingPointInfoKvp in _currentLinePickingPoints)
-                {
-                    var linePickingPointInfo = linePickingPointInfoKvp.Value;
-                    Destroy(linePickingPointInfo.DebugVisual);
-                    linePickingPointInfo.DebugVisual = null;
-
-                    if (linePickingPointInfo.LineVisual)
-                        linePickingPointInfo.LineVisual.transform.SetParent(lineParent.transform);
-                }
-            }
+                CleanupLinePickingObjects();
             
             foreach (var obj in _gameObjectsToCleanup)
                 Destroy(obj);
             _gameObjectsToCleanup.Clear();
             
             EndLinePicking();
-        }
-
-        private GameObject DrawPickedPointsAsLine(Vector3[] worldCoords, Transform radargramTransform)
-        {
-            List<Vector3> filteredCoords = worldCoords.Where(coord => coord != Vector3.zero).ToList();
-            GameObject lineObject = new GameObject("Polyline");
-            LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
-
-            lineRenderer.positionCount = filteredCoords.Count;
-            lineRenderer.SetPositions(filteredCoords.ToArray());
-    
-            // Set the color of the line using the Unlit/Color shader
-            LineRendererUtils.InitializeLineRenderer(lineRenderer, lineColor);
-
-            // Make the drawn line a child of the radargram
-            lineObject.transform.SetParent(radargramTransform, false);
-
-            // Convert world positions to local positions
-            Vector3[] localPositions = new Vector3[filteredCoords.Count];
-            for (int i = 0; i < filteredCoords.Count; i++)
-            {
-                localPositions[i] = radargramTransform.InverseTransformPoint(filteredCoords[i]);
-            }
-
-            // Set the local positions
-            lineRenderer.SetPositions(localPositions);
-
-            // Now we can safely set useWorldSpace to false
-            lineRenderer.useWorldSpace = false;
-
-            return lineObject;
         }
 
         private void EndLinePicking()
@@ -182,7 +154,7 @@ namespace LinePicking
                 {
                     Vector2 startUV = lastPoint.LineVisual ? UVHelpers.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
                     Vector3[] worldCoords = UVHelpers.GetLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
-                    info.LineVisual = DrawPickedPointsAsLine(worldCoords, _currentRadargram);
+                    info.LineVisual = LinePickUtils.DrawPickedPointsAsLine(worldCoords, _currentRadargram, lineColor);
                 }
                 else
                 {
@@ -205,15 +177,7 @@ namespace LinePicking
                 
             _currentLinePickingPoints.Add(pointToAdd, info);
         }
-
-        private void DeactivateLineMarkObject(GameObject obj)
-        {
-            if (!obj) return;
-            
-            obj.SetActive(false);
-            _gameObjectsToCleanup.Add(obj);
-        }
-
+        
         private void TryAddLastPoint(Vector3 pointToAdd, Vector3 lastPointPos, LinePickingPointInfo info)
         {
             float scaledInterval = linePickingHorizontalInterval / ScaleConstants.UNITY_TO_WORLD_SCALE;
@@ -237,7 +201,15 @@ namespace LinePicking
                 _currentLinePickingPoints.Remove(lastPointPos);
             }
         }
-        
+       
+        private void DeactivateLineMarkObject(GameObject obj)
+        {
+            if (!obj) return;
+            
+            obj.SetActive(false);
+            _gameObjectsToCleanup.Add(obj);
+        }
+
         IEnumerator ContinuousPicking()
         {
             while (_inLinePickingMode)
