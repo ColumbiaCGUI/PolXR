@@ -22,6 +22,12 @@ public class MetaData
     public Centroid centroid;
 }
 
+[System.Serializable]
+public class Manifest
+{
+    public string[] files;
+}
+
 
 public class DataLoader : MonoBehaviour
 {
@@ -99,9 +105,10 @@ public class DataLoader : MonoBehaviour
             return Vector3.zero;
         }
     }
-    
+
     private void StartCopyProcess()
     {
+        Debug.Log("Starting copy process...");
         StartCoroutine(CopyStreamingAssetsToPersistentData());
     }
 
@@ -109,6 +116,11 @@ public class DataLoader : MonoBehaviour
     {
         string sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
         string destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
+        string manifestPath = Path.Combine(sourcePath, "manifest.json");
+
+        Debug.Log($"Source path: {sourcePath}");
+        Debug.Log($"Destination path: {destinationPath}");
+        Debug.Log($"Manifest path: {manifestPath}");
 
         // Ensure destination directory exists
         if (!Directory.Exists(destinationPath))
@@ -116,85 +128,106 @@ public class DataLoader : MonoBehaviour
             Directory.CreateDirectory(destinationPath);
         }
 
-        // Get all files and directories to copy
-        yield return StartCoroutine(CopyDirectory(sourcePath, destinationPath));
+        // Read the manifest file
+        yield return StartCoroutine(ReadFileFromStreamingAssets(manifestPath, (data) =>
+        {
+            if (data != null)
+            {
+                try
+                {
+                    string manifestContent = System.Text.Encoding.UTF8.GetString(data);
+                    var manifest = JsonUtility.FromJson<Manifest>(manifestContent);
+                    StartCoroutine(CopyFilesFromManifest(manifest));
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"Error parsing manifest: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to read manifest file.");
+            }
+        }));
 
         Debug.Log("File copying from StreamingAssets to PersistentDataPath completed.");
 
         copyComplete = true;
     }
 
-    private IEnumerator CopyDirectory(string sourceDir, string destDir)
+    private IEnumerator CopyFilesFromManifest(Manifest manifest)
     {
-        // Ensure destination subdirectory exists
-        if (!Directory.Exists(destDir))
+        foreach (string relativeFilePath in manifest.files)
         {
-            Directory.CreateDirectory(destDir);
-        }
+            string sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
+            string destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath);
 
-        // Handle files in the current directory
-        string[] files = Directory.Exists(sourceDir) ? Directory.GetFiles(sourceDir) : new string[0];
-        foreach (string file in files)
-        {
-            string fileName = Path.GetFileName(file);
-            string sourceFilePath = Path.Combine(sourceDir, fileName);
-            string destFilePath = Path.Combine(destDir, fileName);
+            // Ensure the destination directory exists
+            string destDir = Path.GetDirectoryName(destFilePath);
+            if (!Directory.Exists(destDir))
+            {
+                Directory.CreateDirectory(destDir);
+            }
 
-            // Read file from StreamingAssets
+            // Copy the file
             yield return StartCoroutine(ReadFileFromStreamingAssets(sourceFilePath, (data) =>
             {
-                // Write to PersistentDataPath
-                try
+                if (data != null)
                 {
-                    File.WriteAllBytes(destFilePath, data);
-                    Debug.Log($"Copied file: {fileName} to {destFilePath}");
+                    try
+                    {
+                        File.WriteAllBytes(destFilePath, data);
+                        Debug.Log($"Copied file: {relativeFilePath} to {destFilePath}");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"Error writing file {relativeFilePath} to {destFilePath}: {ex.Message}");
+                    }
                 }
-                catch (System.Exception ex)
+                else
                 {
-                    Debug.LogError($"Error writing file {fileName} to {destFilePath}: {ex.Message}");
+                    Debug.LogError($"Failed to read file: {relativeFilePath}");
                 }
             }));
-        }
-
-        // Recursively handle subdirectories
-        string[] subDirs = Directory.Exists(sourceDir) ? Directory.GetDirectories(sourceDir) : new string[0];
-        foreach (string subDir in subDirs)
-        {
-            string subDirName = Path.GetFileName(subDir);
-            string destSubDir = Path.Combine(destDir, subDirName);
-            yield return StartCoroutine(CopyDirectory(subDir, destSubDir));
         }
     }
 
     private IEnumerator ReadFileFromStreamingAssets(string filePath, System.Action<byte[]> onComplete)
     {
-        string adjustedPath = filePath;
-
-        // Handle platform-specific path for StreamingAssets
-        if (Application.platform == RuntimePlatform.Android)
+        if (filePath.Contains("://") || filePath.Contains(":///"))
         {
-            adjustedPath = "jar:file://" + filePath;
-        }
-        else if (filePath.Contains("://") || filePath.Contains(":///"))
-        {
-            adjustedPath = filePath;
-        }
-
-        using (UnityWebRequest www = UnityWebRequest.Get(adjustedPath))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            // Use UnityWebRequest for URL-based paths (e.g., Android, WebGL)
+            using (UnityWebRequest www = UnityWebRequest.Get(filePath))
             {
-                onComplete?.Invoke(www.downloadHandler.data);
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    onComplete?.Invoke(www.downloadHandler.data);
+                }
+                else
+                {
+                    Debug.LogError($"Error reading file {filePath}: {www.error}");
+                    onComplete?.Invoke(null);
+                }
             }
-            else
+        }
+        else
+        {
+            // Use File.ReadAllBytes for local filesystem (e.g., Unity Editor, Windows)
+            try
             {
-                Debug.LogError($"Error reading file {filePath}: {www.error}");
+                byte[] data = File.ReadAllBytes(filePath);
+                onComplete?.Invoke(data);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Error reading file {filePath}: {ex.Message}");
                 onComplete?.Invoke(null);
             }
         }
     }
+
     void Start()
     {
         // Start copying files from StreamingAssets to PersistentDataPath
@@ -208,7 +241,7 @@ public class DataLoader : MonoBehaviour
         radarShader = Resources.Load<Shader>("Shaders/RadarShader");
         if (radarShader == null)
         {
-            Debug.LogError("Failed to load RadarShader at Assets/Shaders/RadarShader.shader!");
+            Debug.LogError("Failed to load RadarShader at Resources/Shaders/RadarShader.shader!");
             return;
         }
     }
@@ -469,18 +502,6 @@ public class DataLoader : MonoBehaviour
         radarMenu.SetActive(true);
     }
 
-
-    // CTL Networking
-    // private GameObject LoadObj(string objPath)
-    // {
-    //     GameObject importedObj = AssetDatabase.LoadAssetAtPath<GameObject>(objPath);
-    //     if (importedObj == null)
-    //     {
-    //         Debug.LogError($"Failed to load OBJ: {objPath}");
-    //         return null;
-    //     }
-    //     return Instantiate(importedObj);
-    // }
     private GameObject LoadObj(string objPath, bool optimized = false)
     {
         try
