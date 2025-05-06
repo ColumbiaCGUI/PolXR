@@ -5,19 +5,20 @@ using UnityEngine.UI;
 using TMPro;
 using System.IO;
 using System;
+using UnityEngine.InputSystem;
 
 public class HomeMenuController : MonoBehaviour
 {
-    public Transform user;
-    public Transform userCamera;
+    [SerializeField] private Transform user;
+    [SerializeField] private Transform userCamera;
     private float distance = 0.5f;
-
-    public Transform sceneDropdown; // DEM dropdown container
-    public GameObject dropdownPrefab; // Flightline dropdown prefab
-    public Transform dropdownContainer; // Parent for flightline dropdowns
-    public Button addButton;
-    public Button loadButton;
-    public RectTransform initialDropdown;
+    [SerializeField] private Transform sceneDropdown; // DEM dropdown container
+    [SerializeField] private GameObject dropdownPrefab; // Flightline dropdown prefab
+    [SerializeField] private Transform dropdownContainer; // Parent for flightline dropdowns
+    [SerializeField] private Button addButton;
+    [SerializeField] private Button loadButton;
+    [SerializeField] private RectTransform initialDropdown;
+    [SerializeField] private InputActionReference toggleHomeMenuButton;
 
     private Vector3 startPosition;
     private List<GameObject> dropdownList = new List<GameObject>();
@@ -49,6 +50,22 @@ public class HomeMenuController : MonoBehaviour
         addButton.onClick.AddListener(AddDropdown);
 
         StartCoroutine(WaitAndPopulateDropdowns());
+    }
+    private void OnToggleMenu(InputAction.CallbackContext context)
+    {
+        gameObject.SetActive(!gameObject.activeSelf);
+    }
+
+    void OnEnable()
+    {
+        toggleHomeMenuButton.action.performed += OnToggleMenu;
+        toggleHomeMenuButton.action.Enable();
+    }
+
+    void OnDisable()
+    {
+        toggleHomeMenuButton.action.performed -= OnToggleMenu;
+        toggleHomeMenuButton.action.Disable();
     }
 
     IEnumerator WaitAndPopulateDropdowns()
@@ -138,8 +155,16 @@ public class HomeMenuController : MonoBehaviour
 
         Debug.Log("DEM: " + DataLoader.Instance.demDirectoryPath);
         Debug.Log("Flightlines: " + string.Join(", ", DataLoader.Instance.flightlineDirectories));
-
-        DataLoader.Instance.sceneSelected = true;
+        
+        if (DataLoader.Instance.sceneSelected)
+        {
+            DataLoader.Instance.DeleteAllChildren();
+            DataLoader.Instance.LoadSceneData();
+        }
+        else
+        {
+            DataLoader.Instance.sceneSelected = true;
+        }
 
         user.position = DataLoader.Instance.GetDEMCentroid();
         gameObject.SetActive(false);

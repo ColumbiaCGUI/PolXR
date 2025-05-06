@@ -1025,9 +1025,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1625219987}
     - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: toggleHomeMenuButton
+      value: 
+      objectReference: {fileID: 8161139870953868484, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
       propertyPath: flightlineEntryPrefab
       value: 
       objectReference: {fileID: 1625219990}
+    - target: {fileID: 7682413046585437746, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+      propertyPath: toggleLinePickingButton
+      value: 
+      objectReference: {fileID: 8161139870953868484, guid: c348712bda248c246b8c49b3db54643f, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

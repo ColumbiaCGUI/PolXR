@@ -38,6 +38,13 @@ public class DataLoader : MonoBehaviour
     void Awake(){
         Instance = this;
     }
+    public void DeleteAllChildren()
+    {
+        foreach (Transform child in gameObject.transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+    }
     public Vector3 GetDEMCentroid()
     {
         if (string.IsNullOrEmpty(demDirectoryPath) || !Directory.Exists(demDirectoryPath))
@@ -211,6 +218,10 @@ public class DataLoader : MonoBehaviour
         // Wait until copying is done (you can use a flag or check directory existence)
         yield return new WaitUntil(() => copyComplete && sceneSelected);
 
+        LoadSceneData();
+    }
+    public void LoadSceneData()
+    {
         // Update paths to point to PersistentDataPath
         demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
         flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();

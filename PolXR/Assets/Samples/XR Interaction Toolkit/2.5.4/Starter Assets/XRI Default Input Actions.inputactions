@@ -790,6 +790,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Toggle Home Menu",
+                    "type": "Button",
+                    "id": "387849af-dce0-4109-9f2e-e4aad2b6c643",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -966,6 +975,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Toggle Line Picking",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "02f4b418-35e1-45aa-b873-a21d375bf040",
+                    "path": "<XRController>{LeftHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Toggle Home Menu",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
