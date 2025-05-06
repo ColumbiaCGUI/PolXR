@@ -344,7 +344,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6598815579406187037, guid: 18ddb545287c546e19cc77dc9fbb2189, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -492,7 +492,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   linePickingTrigger: {fileID: -3109570328498411688, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   rightControllerRayInteractor: {fileID: 1790617805321227483}
-  markObjPrefab: {fileID: 2249673742242929124, guid: 4a336c5f27269bf4ca64bf1623a23006, type: 3}
+  markObjPrefab: {fileID: 2249673742242929124, guid: 28485aa1aae467049b29ce0959a0a35a, type: 3}
   pixelsBetweenPoints: 10
   lineColor: {r: 0.2, g: 0.2, b: 1, a: 1}
 --- !u!114 &713289717
@@ -1074,6 +1074,11 @@ RectTransform:
 --- !u!1 &1625219990 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1484199655138079522, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
+  m_PrefabInstance: {fileID: 1625219986}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1625219991 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 448055933352159078, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
   m_PrefabInstance: {fileID: 1625219986}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1894480228
@@ -6235,6 +6240,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2987126521299037033}
   - component: {fileID: 2987126521299037034}
+  - component: {fileID: 2987126521299037036}
   m_Layer: 0
   m_Name: Input Action Manager
   m_TagString: Untagged
@@ -6242,6 +6248,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &2987126521299037036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2987126521299037035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b63a961269fc1b949a731f955aa085ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  toggleHomeMenuButton: {fileID: 8161139870953868484, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  homeMenu: {fileID: 1625219991}
 --- !u!1 &2987126521831791109
 GameObject:
   m_ObjectHideFlags: 0

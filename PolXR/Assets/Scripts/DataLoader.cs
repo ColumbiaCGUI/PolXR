@@ -80,9 +80,9 @@ public class DataLoader : MonoBehaviour
                 Vector3 rotatedCentroid = rotation * centroid;
 
                 Vector3 scaledRotatedCentroid = new Vector3(
-                    rotatedCentroid.x * 0.0001f,
+                    -rotatedCentroid.x * 0.0001f,
                     rotatedCentroid.y * 0.001f,
-                    -rotatedCentroid.z * 0.0001f
+                    rotatedCentroid.z * 0.0001f
                 );
 
                 return scaledRotatedCentroid;
@@ -219,6 +219,12 @@ public class DataLoader : MonoBehaviour
         yield return new WaitUntil(() => copyComplete && sceneSelected);
 
         LoadSceneData();
+
+        // Set Toggle Functionality
+        SetTogglesForMenus();
+
+        // Set Button Functionality
+        SetButtonsForMenus();
     }
     public void LoadSceneData()
     {
@@ -255,12 +261,6 @@ public class DataLoader : MonoBehaviour
             GameObject flightlineContainer = CreateChildGameObject(Path.GetFileName(flightlineDirectory), radarContainer.transform);
             ProcessFlightlines(flightlineDirectory, flightlineContainer);
         }
-
-        // Set Toggle Functionality
-        SetTogglesForMenus();
-
-        // Set Button Functionality
-        SetButtonsForMenus();
 
         DisableAllRadarObjects(radarContainer);
         DisableMenus();
@@ -323,8 +323,6 @@ public class DataLoader : MonoBehaviour
                 demObj.transform.SetParent(parent.transform);
             }
         }
-        Vector3 localScale = parent.transform.localScale;
-        parent.transform.localScale = new Vector3(localScale.x, localScale.y, localScale.z * -1);
     }
 
     private void ProcessFlightlines(string flightlineDirectory, GameObject parent)
@@ -425,8 +423,6 @@ public class DataLoader : MonoBehaviour
                 }
             }
         }
-        Vector3 localScale = parent.transform.localScale;
-        parent.transform.localScale = new Vector3(localScale.x, localScale.y, localScale.z * -1);
     }
 
     void ConvertRadargramToWorld(SelectEnterEventArgs args)
@@ -489,15 +485,14 @@ public class DataLoader : MonoBehaviour
     {
         try
         {
-            // Check if the OBJ file exists
             if (!File.Exists(objPath))
             {
                 Debug.LogError($"OBJ file not found: {objPath}");
                 return null;
             }
+
             GameObject loadedObject;
 
-            // Load the OBJ file using Dummiesman OBJLoader
             if (optimized)
             {
                 loadedObject = new OptimizedOBJLoader.OBJLoader().Load(objPath);
@@ -513,9 +508,37 @@ public class DataLoader : MonoBehaviour
                 return null;
             }
 
-            // Ensure the loaded object has a valid name
             loadedObject.name = Path.GetFileNameWithoutExtension(objPath);
-            
+
+            MeshFilter[] meshFilters = loadedObject.GetComponentsInChildren<MeshFilter>();
+            foreach (MeshFilter mf in meshFilters)
+            {
+                Mesh mesh = mf.mesh;
+                Vector3[] vertices = mesh.vertices;
+                for (int i = 0; i < vertices.Length; i++)
+                {
+                    vertices[i].x = -vertices[i].x;
+                }
+                mesh.vertices = vertices;
+
+                // Reverse triangle winding order
+                for (int submesh = 0; submesh < mesh.subMeshCount; submesh++)
+                {
+                    int[] triangles = mesh.GetTriangles(submesh);
+                    for (int i = 0; i < triangles.Length; i += 3)
+                    {
+                        // Swap winding order (flip triangle)
+                        int temp = triangles[i];
+                        triangles[i] = triangles[i + 1];
+                        triangles[i + 1] = temp;
+                    }
+                    mesh.SetTriangles(triangles, submesh);
+                }
+
+                mesh.RecalculateNormals();
+                mesh.RecalculateBounds();
+            }
+
             return loadedObject;
         }
         catch (System.Exception ex)
@@ -524,6 +547,7 @@ public class DataLoader : MonoBehaviour
             return null;
         }
     }
+
 
 
     private Texture2D LoadTexture(string texturePath)
@@ -581,7 +605,7 @@ public class DataLoader : MonoBehaviour
         if (vertices.Count > 1)
         {
             // Rotate the vertices manually by 180 degrees around the global origin
-            List<Vector3> rotatedVertices = RotateVertices(vertices, 0);
+            List<Vector3> rotatedVertices = RotateVertices(vertices, 180);
 
             // Create a GameObject for the LineRenderer
             GameObject lineObj = CreateChildGameObject("Flightline", parentContainer.transform);

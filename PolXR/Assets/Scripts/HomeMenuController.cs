@@ -35,6 +35,8 @@ public class HomeMenuController : MonoBehaviour
         startPosition = initialDropdown.anchoredPosition;
         dropdownList.Add(initialDropdown.gameObject);
 
+        loadButton.interactable = false;
+
         // Set initial "Loading..." for DEM
         TMP_Dropdown demDropdown = sceneDropdown.GetComponentInChildren<TMP_Dropdown>();
         if (demDropdown != null)
@@ -50,22 +52,6 @@ public class HomeMenuController : MonoBehaviour
         addButton.onClick.AddListener(AddDropdown);
 
         StartCoroutine(WaitAndPopulateDropdowns());
-    }
-    private void OnToggleMenu(InputAction.CallbackContext context)
-    {
-        gameObject.SetActive(!gameObject.activeSelf);
-    }
-
-    void OnEnable()
-    {
-        toggleHomeMenuButton.action.performed += OnToggleMenu;
-        toggleHomeMenuButton.action.Enable();
-    }
-
-    void OnDisable()
-    {
-        toggleHomeMenuButton.action.performed -= OnToggleMenu;
-        toggleHomeMenuButton.action.Disable();
     }
 
     IEnumerator WaitAndPopulateDropdowns()
@@ -93,6 +79,8 @@ public class HomeMenuController : MonoBehaviour
 
         // Populate existing initial dropdown (first Flightline)
         PopulateDropdown(initialDropdown.GetComponentInChildren<TMP_Dropdown>());
+
+        loadButton.interactable = true;
     }
 
     public void AddDropdown()
