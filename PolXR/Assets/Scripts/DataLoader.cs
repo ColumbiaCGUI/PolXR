@@ -311,6 +311,7 @@ public class DataLoader : MonoBehaviour
             }
         }
     }
+
     private void ProcessDEMs(GameObject parent)
     {
         Debug.Log("DataLoader Process DEMs called!");
@@ -394,7 +395,8 @@ public class DataLoader : MonoBehaviour
                         Transform meshChild = radarObj.transform.Find("mesh");
                         if (meshChild != null)
                         {
-                            string texturePath = Path.Combine(segmentFolder, Path.GetFileNameWithoutExtension(objFile) + ".png");
+                            string texturePath = Path.Combine(segmentFolder,
+                                Path.GetFileNameWithoutExtension(objFile) + ".png");
                             if (File.Exists(texturePath))
                             {
                                 Texture2D texture = LoadTexture(texturePath);
@@ -412,7 +414,6 @@ public class DataLoader : MonoBehaviour
 
                         // Add necessary components to the Radar object
 
-                        // Attach the Box Collider
                         GameObject radarMesh = meshChild.gameObject;
 
                         //BoxCollider bc = radarMesh.AddComponent<BoxCollider>();
@@ -448,6 +449,10 @@ public class DataLoader : MonoBehaviour
                         //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
 
 
+                        //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
+                        //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
+
+
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarMesh.layer = RadarGramLayer;
 
@@ -466,7 +471,6 @@ public class DataLoader : MonoBehaviour
 
         Transform meshTransform = component.transform;
         Debug.Log(meshTransform.name);
-
     }
 
     // Reset Radargram interactable back to position 0,0,0, rotation 0,0,0, scale 1,1,1
@@ -480,8 +484,8 @@ public class DataLoader : MonoBehaviour
         Debug.Log(radargramMesh.name);
         Debug.Log(radargramMesh.transform);
 
-        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / 10000,
-            radargramMesh.localPosition.y / 10000, radargramMesh.position.z / 1000);
+        radargramMesh.localPosition = new Vector3(radargramMesh.localPosition.x / ScaleConstants.UNITY_TO_WORLD_SCALE,
+            radargramMesh.localPosition.y / ScaleConstants.UNITY_TO_WORLD_SCALE, radargramMesh.position.z / 1000);
         radargramMesh.localEulerAngles = new Vector3(0, 0, 0); // TODO: Does not account for rotation properly
         // radargramMesh.localRotation = Quaternion.identity;
         // radargramMesh.localPosition = new Vector3(0, 0, 0);
@@ -513,7 +517,6 @@ public class DataLoader : MonoBehaviour
             }
 
             GameObject loadedObject;
-
             if (optimized)
             {
                 loadedObject = new OptimizedOBJLoader.OBJLoader().Load(objPath);
@@ -540,6 +543,7 @@ public class DataLoader : MonoBehaviour
                 {
                     vertices[i].x = -vertices[i].x;
                 }
+
                 mesh.vertices = vertices;
 
                 // Reverse triangle winding order
@@ -553,6 +557,7 @@ public class DataLoader : MonoBehaviour
                         triangles[i] = triangles[i + 1];
                         triangles[i + 1] = temp;
                     }
+
                     mesh.SetTriangles(triangles, submesh);
                 }
 
@@ -570,8 +575,7 @@ public class DataLoader : MonoBehaviour
     }
 
 
-
-    private Texture2D LoadTexture(string texturePath)
+        private Texture2D LoadTexture(string texturePath)
     {
         byte[] fileData = File.ReadAllBytes(texturePath);
         Texture2D texture = new Texture2D(2, 2);
@@ -619,6 +623,7 @@ public class DataLoader : MonoBehaviour
 
                     vertices.Add(new Vector3(x, y, z));
                 }
+
                 index++;
             }
         }
@@ -656,7 +661,6 @@ public class DataLoader : MonoBehaviour
                 }
             }
 
-
             XRSimpleInteractable m_Interactable = lineObj.GetComponent<XRSimpleInteractable>();
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
 
@@ -692,7 +696,7 @@ public class DataLoader : MonoBehaviour
                 child.gameObject.SetActive(!child.gameObject.activeSelf);
 
                 Transform meshChild = child.transform.Find("mesh");
-
+                
                 meshChild.localRotation = Quaternion.identity;
                 meshChild.localPosition = new Vector3(0, 0, 0);
                 meshChild.localScale = Vector3.one;
@@ -775,12 +779,15 @@ public class DataLoader : MonoBehaviour
     private void SetTogglesForMenus()
     {
         Toggle radarMenuRadargramToggle = GameObject.Find("RadarMenu/Toggles/Radargram Toggle").GetComponent<Toggle>();
-        Toggle radarMenuSurfaceDEMToggle = GameObject.Find("RadarMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
+        Toggle radarMenuSurfaceDEMToggle =
+            GameObject.Find("RadarMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
 
         //BoundingBox Not Implemented
-        Toggle mainMenuBoundingBoxToggle = GameObject.Find("MainMenu/Toggles/BoundingBox Toggle").GetComponent<Toggle>();
+        Toggle mainMenuBoundingBoxToggle =
+            GameObject.Find("MainMenu/Toggles/BoundingBox Toggle").GetComponent<Toggle>();
 
-        Toggle mainMenuFlightlinesToggle = GameObject.Find("MainMenu/Toggles/Flightlines Toggle").GetComponent<Toggle>();
+        Toggle mainMenuFlightlinesToggle =
+            GameObject.Find("MainMenu/Toggles/Flightlines Toggle").GetComponent<Toggle>();
         Toggle mainMenuSurfaceDEMToggle = GameObject.Find("MainMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
         Toggle mainMenuBaseDEMToggle = GameObject.Find("MainMenu/Toggles/Base DEM Toggle").GetComponent<Toggle>();
 
@@ -790,7 +797,6 @@ public class DataLoader : MonoBehaviour
 
         radarMenuRadargramToggle.onValueChanged.AddListener(ToggleRadargram);
         mainMenuFlightlinesToggle.onValueChanged.AddListener(ToggleFlightlines);
-
     }
 
     private void SetButtonsForMenus()
@@ -812,8 +818,10 @@ public class DataLoader : MonoBehaviour
         Button mmClose = GameObject.Find("MainMenu/Buttons/ButtonClose").GetComponent<Button>();
         mmClose.onClick.AddListener(CloseMainMenu);
         Button mmMiniMap = GameObject.Find("MainMenu/Buttons/ButtonMiniMap").GetComponent<Button>(); // NOT IMPLEMENTED
-        Button mmLoadScene = GameObject.Find("MainMenu/Buttons/ButtonLoadScene").GetComponent<Button>(); // NOT IMPLEMENTED
-        Button mmHomeScreen = GameObject.Find("MainMenu/Buttons/ButtonHomeScreen").GetComponent<Button>(); // NOT IMPLEMENTED
+        Button mmLoadScene =
+            GameObject.Find("MainMenu/Buttons/ButtonLoadScene").GetComponent<Button>(); // NOT IMPLEMENTED
+        Button mmHomeScreen =
+            GameObject.Find("MainMenu/Buttons/ButtonHomeScreen").GetComponent<Button>(); // NOT IMPLEMENTED
     }
 
     void DisableMenus()
@@ -865,7 +873,7 @@ public class DataLoader : MonoBehaviour
     }
 
     private void ScaleAndRotate(GameObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
-    // private void ScaleAndRotate(NetworkObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
+        // private void ScaleAndRotate(NetworkObject obj, float scaleX, float scaleY, float scaleZ, float rotationX)
     {
         obj.transform.localScale = new Vector3(scaleX, scaleY, scaleZ);
         obj.transform.eulerAngles = new Vector3(rotationX, 0f, 0f);
