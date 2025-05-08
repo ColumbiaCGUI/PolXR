@@ -1,11 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using UniGLTF.MeshUtility;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 using UnityEngine.XR.Interaction.Toolkit;
 
 namespace LinePicking
