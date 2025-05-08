@@ -75,6 +75,8 @@ namespace LinePicking
 
         public void ToggleGuidedLinePicking()
         {
+            if (!isLinePickingEnabled) return;
+            
             if (isGuidedLinePickingEnabled)
                 DisableGuidedLinePicking();
             else
@@ -86,6 +88,7 @@ namespace LinePicking
             if (!isLinePickingEnabled)
             {
                 rightControllerLineVisual.validColorGradient = _initialRightControllerValidLineGradient;
+                return;
             }
             
             rightControllerLineVisual.validColorGradient = isGuidedLinePickingEnabled ? unguidedLinePickingColorGradient : guidedLinePickingColorGradient;

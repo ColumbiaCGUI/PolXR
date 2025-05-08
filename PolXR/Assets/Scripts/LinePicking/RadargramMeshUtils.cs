@@ -61,7 +61,7 @@ namespace LinePicking
             return uv1 * barycentric.x + uv2 * barycentric.y + uv3 * barycentric.z;
         }
         
-        public static Vector3 GetPointOnRadargramMesh(Vector2 uv, GameObject radargramMesh, string radargramImgName, bool exportDebugImg = false)
+        public static Vector3 GetPointOnRadargramMesh(Vector2 uv, GameObject radargramMesh)
         {
             // Get the texture from the mesh renderer's material
             MeshRenderer meshRenderer = radargramMesh.GetComponent<MeshRenderer>();
@@ -88,15 +88,6 @@ namespace LinePicking
             // Rotate the texture 180 degrees
             Texture2D texture = TextureUtils.ReflectTextureDiagonally(originalTexture);
 
-            // Create a debug texture to visualize the brightest pixels
-            Texture2D debugTexture = new Texture2D(texture.width, texture.height);
-            if (exportDebugImg)
-            {
-                Color[] originalPixels = texture.GetPixels();
-                debugTexture.SetPixels(originalPixels);
-                debugTexture.Apply();
-            }
-
             int h = texture.height;
             int w = texture.width;
 
@@ -104,18 +95,8 @@ namespace LinePicking
             int beginX = w - (int)(w * uv.x);
             int beginY = h - (int)(h * uv.y); // Flip Y coordinate for top-left origin
 
-            // Mark the initial picked point on the debug texture
-            if (exportDebugImg)
-            {
-                debugTexture.SetPixel(beginX, beginY, Color.red);
-                debugTexture.Apply();
-            }
-
             Vector2 pickedPointUV = new Vector2(1.0f - (float)beginX / w, 1.0f - (float)beginY / h);
             Vector3 point = CoordinateUtils.UvTo3D(pickedPointUV, radargramMesh.GetComponent<MeshFilter>().mesh, radargramMesh.transform);
-
-            // Save the debug texture to a file for inspection
-            TextureUtils.SaveDebugTexture(debugTexture, radargramImgName);
 
             return point;
         }

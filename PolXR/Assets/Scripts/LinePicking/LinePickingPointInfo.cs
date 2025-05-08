@@ -16,4 +16,10 @@ namespace LinePicking
 
         public GameObject LineVisual;
     }
+
+    public enum LinePickingDirection
+    {
+        Forward,
+        Backward
+    }
 }

@@ -22,6 +22,8 @@ namespace LinePicking
 
         private bool _inLinePickingMode;
         
+        private LinePickingDirection _currentLinePickingDirection;
+        
         private Coroutine _continuousLinePickingCoroutine;
 
         private Dictionary<Vector3, LinePickingPointInfo> _currentLinePickingPoints = new();
@@ -49,6 +51,8 @@ namespace LinePicking
         [Header("Debug")]
         
         public bool showDebugPoints;
+
+        public bool createDebugImages;
         
         private void Start()
         {
@@ -137,21 +141,30 @@ namespace LinePicking
             // when point is added, draw line from last point to current point if there is a last point
             if (_currentLinePickingPoints.Count > 0)
             {
-                LinePickingPointInfo lastPoint = _currentLinePickingPoints.Last().Value;
+                LinePickingPointInfo lastPoint = GetLastPointInfo();
                 GameObject meshObj = _currentRadargram.GetChild(0).gameObject;
                 
                 // get UV of last line's endpoint
                 Vector3 lastPointWorld = lastPoint.Point;
+                
                 if (lastPoint.LineVisual)
                 {
                     LineRenderer lineRenderer = lastPoint.LineVisual.GetComponent<LineRenderer>();
-                    lastPointWorld = lineRenderer.GetPosition(lineRenderer.positionCount - 1);
+
+                    Vector3 firstPointOnLastLine = lineRenderer.GetPosition(0);
+                    Vector3 lastPointOnLastLine = lineRenderer.GetPosition(lineRenderer.positionCount - 1);
+                    Vector3 inverseTransformedLastPointWorld = _currentRadargram.InverseTransformPoint(lastPointWorld);
+                    
+                    float firstPointDist = Vector3.Distance(firstPointOnLastLine, inverseTransformedLastPointWorld);
+                    float lastPointDist = Vector3.Distance(lastPointOnLastLine, inverseTransformedLastPointWorld);
+                    
+                    lastPointWorld = firstPointDist > lastPointDist ? lastPointOnLastLine : firstPointOnLastLine;
                 }
                 
                 if (_toggleLinePickingMode.isGuidedLinePickingEnabled)
                 {
                     Vector2 startUV = lastPoint.LineVisual ? CoordinateUtils.WorldToUV(lastPointWorld, meshObj.GetComponent<MeshRenderer>().GetMesh(), meshObj.transform) : lastPoint.UVCoordinates;
-                    Vector3[] worldCoords = LineGeneration.GetGuidedLinePickingPoints(startUV, info.UVCoordinates, meshObj, _currentRadargram.name, info.HitNormal, pixelsBetweenLinePoints);
+                    Vector3[] worldCoords = LineGeneration.GetGuidedLinePickingPoints(startUV, info.UVCoordinates, meshObj, info.HitNormal, pixelsBetweenLinePoints, createDebugImages);
                     info.LineVisual = LinePickUtils.DrawPickedPointsAsLine(worldCoords, _currentRadargram, lineColor);
                 }
                 else
@@ -167,28 +180,18 @@ namespace LinePicking
             _currentLinePickingPoints.Add(pointToAdd, info);
         }
         
-        private void TryAddLastPoint(Vector3 pointToAdd, Vector3 lastPointPos, LinePickingPointInfo info)
+        private void RemoveLastPoint()
         {
-            float scaledInterval = linePickingHorizontalInterval / ScaleConstants.UNITY_TO_WORLD_SCALE;
-            bool pointIsFarEnoughFromLastPoint = pointToAdd.x - lastPointPos.x >= scaledInterval;
-
-            if (pointIsFarEnoughFromLastPoint)
-                AddPoint(pointToAdd, info);
-        }
-
-        private void TryRemoveLastPoint(Vector3 raycastHitPos, Vector3 lastPointPos)
-        {
-            float scaledInterval = linePickingHorizontalInterval / ScaleConstants.UNITY_TO_WORLD_SCALE;
-            bool pointIsFarEnoughFromLastPoint = raycastHitPos.x - lastPointPos.x <= scaledInterval;
-
-            if (pointIsFarEnoughFromLastPoint)
+            if (GetLastPointInfo() == null)
             {
-                _currentLinePickingPoints.TryGetValue(lastPointPos, out LinePickingPointInfo pointInfo);
-                
-                DeactivateLineMarkObject(pointInfo?.DebugVisual);
-                DeactivateLineMarkObject(pointInfo?.LineVisual);
-                _currentLinePickingPoints.Remove(lastPointPos);
+                Debug.LogError("RemoveLastPoint called but last point is null");
+                return;
             }
+            
+            LinePickingPointInfo lastPointInfo = GetLastPointInfo();
+            DeactivateLineMarkObject(lastPointInfo.DebugVisual);
+            DeactivateLineMarkObject(lastPointInfo.LineVisual);
+            _currentLinePickingPoints.Remove(lastPointInfo.Point);
         }
        
         private void DeactivateLineMarkObject(GameObject obj)
@@ -198,6 +201,8 @@ namespace LinePicking
             obj.SetActive(false);
             _gameObjectsToCleanup.Add(obj);
         }
+
+        private LinePickingPointInfo GetLastPointInfo() => _currentLinePickingPoints.Count == 0 ? null : _currentLinePickingPoints.Last().Value;
 
         IEnumerator ContinuousPicking()
         {
@@ -211,35 +216,64 @@ namespace LinePicking
                         _currentRadargram = raycastHit.transform;
                     }
                     else if (_currentRadargram != raycastHit.transform)
+                    {
                         EndLinePicking();
+                        yield return null;
+                        continue;
+                    }
                     
                     bool isRadargramMesh = _currentRadargram.name.Contains("Data");
-                    if (!isRadargramMesh) continue;
+                    if (!isRadargramMesh)
+                    {
+                        yield return null;
+                        continue;
+                    }
                     
                     // Get the mesh object that was hit
                     GameObject meshObj = _currentRadargram.GetChild(0).gameObject;
 
                     // Approximate UV coordinates from hit position
                     Vector2 uvCoordinates = RadargramMeshUtils.ApproximateUVFromHit(raycastHit.point, meshObj);
-                    Vector3 potentialPoint = RadargramMeshUtils.GetPointOnRadargramMesh(uvCoordinates, meshObj, _currentRadargram.name);
+                    Vector3 potentialPoint = RadargramMeshUtils.GetPointOnRadargramMesh(uvCoordinates, meshObj);
                     
-                    LinePickingPointInfo pointInfo = new LinePickingPointInfo();
-                    pointInfo.Point = potentialPoint;
-                    pointInfo.HitRadargram = _currentRadargram;
-                    pointInfo.UVCoordinates = uvCoordinates;
-                    pointInfo.HitNormal = raycastHit.normal;
+                    LinePickingPointInfo pointInfo = new LinePickingPointInfo
+                    {
+                        Point = potentialPoint,
+                        HitRadargram = _currentRadargram,
+                        UVCoordinates = uvCoordinates,
+                        HitNormal = raycastHit.normal
+                    };
 
-                    if (_currentLinePickingPoints.Count == 0)
+                    if (GetLastPointInfo() == null)
+                    {
+                        AddPoint(potentialPoint, pointInfo);
+                        yield return null;
+                        continue;
+                    }
+                    
+                    Vector3 lastPoint = GetLastPointInfo().Point;
+                    // if new point is less than scaledInterval away, continue loop (skip all other logic)
+                    
+                    // refactor this into const
+                    float scaledInterval = linePickingHorizontalInterval / ScaleConstants.UNITY_TO_WORLD_SCALE;
+                    if (Mathf.Abs(potentialPoint.x - lastPoint.x) < scaledInterval)
+                    {
+                        yield return null;
+                        continue;
+                    }
+                    
+                    if (_currentLinePickingPoints.Count == 1)
+                        _currentLinePickingDirection = potentialPoint.x > lastPoint.x ? LinePickingDirection.Forward : LinePickingDirection.Backward;
+
+                    bool sameDirection =
+                        _currentLinePickingDirection == LinePickingDirection.Forward &&
+                        potentialPoint.x > lastPoint.x ||
+                        _currentLinePickingDirection == LinePickingDirection.Backward && potentialPoint.x < lastPoint.x;
+                    
+                    if (sameDirection)
                         AddPoint(potentialPoint, pointInfo);
                     else
-                    {
-                        float maxX = _currentLinePickingPoints.Keys.Max(v => v.x);
-                        Vector3 lastPoint = _currentLinePickingPoints.Keys.Single((pos) => Mathf.Approximately(pos.x, maxX));
-                        if (potentialPoint.x > lastPoint.x)
-                            TryAddLastPoint(potentialPoint, lastPoint, pointInfo);
-                        else if (potentialPoint.x < lastPoint.x)
-                            TryRemoveLastPoint(potentialPoint, lastPoint);
-                    }
+                        RemoveLastPoint();
                 }
 
                 yield return new WaitForSeconds(raycastInterval / 1000);
