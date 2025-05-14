@@ -11,8 +11,8 @@ public class XRMeasurePlacer : MonoBehaviour
 
     private Vector3? pointA = null;
     private Vector3? pointB = null;
-    private GameObject markerA;
-    private GameObject markerB;
+    private GameObject previewDot;
+
 
     void OnEnable()
     {
@@ -22,6 +22,17 @@ public class XRMeasurePlacer : MonoBehaviour
     void OnDisable()
     {
         placeAction.action.performed -= OnPlacePressed;
+    }
+
+    public void ResetMeasurement()
+    {
+        pointA = null;
+        pointB = null;
+        if (previewDot != null)
+        {
+            Destroy(previewDot);
+            previewDot = null;
+        }
     }
 
     private void OnPlacePressed(InputAction.CallbackContext context)
@@ -52,22 +63,28 @@ public class XRMeasurePlacer : MonoBehaviour
             if (pointA == null)
             {
                 pointA = hitPoint;
-                markerA = Instantiate(markerPrefab, hitPoint, Quaternion.identity);
+
+                if (previewDot != null) Destroy(previewDot);
+                previewDot = Instantiate(markerPrefab, hitPoint, Quaternion.identity);
             }
+
             else if (pointB == null)
             {
                 pointB = hitPoint;
-                markerB = Instantiate(markerPrefab, hitPoint, Quaternion.identity);
                 measurementManager.SetMeasurementPoints(pointA.Value, pointB.Value);
+                if (previewDot != null)
+                {
+                    Destroy(previewDot);
+                    previewDot = null;
+                }
+
             }
             else
             {
-                // Reset to start a new measurement
-                Destroy(markerA);
-                Destroy(markerB);
                 pointA = hitPoint;
                 pointB = null;
-                markerA = Instantiate(markerPrefab, hitPoint, Quaternion.identity);
+                if (previewDot != null) Destroy(previewDot);
+                previewDot = Instantiate(markerPrefab, hitPoint, Quaternion.identity);
             }
         }
     }

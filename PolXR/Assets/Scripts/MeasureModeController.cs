@@ -17,7 +17,14 @@ public class MeasureModeController : MonoBehaviour
     {
         IsMeasureModeActive = !IsMeasureModeActive;
         Debug.Log("Measure Mode: " + (IsMeasureModeActive ? "ON" : "OFF"));
+
+        if (IsMeasureModeActive)
+        {
+            XRMeasurePlacer placer = FindObjectOfType<XRMeasurePlacer>();
+            placer?.ResetMeasurement(); 
+        }
     }
+
 
     public void SetMeasureMode(bool state)
     {

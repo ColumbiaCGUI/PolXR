@@ -771,7 +771,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   linePrefab: {fileID: 7883657111215739402, guid: 3c50fda9af3ca42cda02b84175319312, type: 3}
-  distanceTextPrefab: {fileID: 8878610560084635492, guid: 78caa058244af4f81871777570799f6e, type: 3}
+  distanceTextPrefab: {fileID: 8596879676074436776, guid: 7ae985fc594174942b4e9ea6fddc0674, type: 3}
   dotPrefab: {fileID: 6049710035095504069, guid: 83ef3999b760b42c5bd85af67a7e1d44, type: 3}
 --- !u!224 &1016427396 stripped
 RectTransform:

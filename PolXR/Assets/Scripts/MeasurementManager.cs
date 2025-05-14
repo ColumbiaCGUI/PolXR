@@ -25,8 +25,12 @@ public class MeasurementManager : MonoBehaviour
         distanceText = Instantiate(distanceTextPrefab);
         distanceText.name = "DistanceText";
 
-        lineRenderer = line.GetComponent<LineRenderer>();
+        lineRenderer = line.GetComponentInChildren<LineRenderer>();
+        lineRenderer.material.color = Color.blue;
+
         distanceTextUI = distanceText.transform.Find("Canvas/DistanceLabel").GetComponent<TextMeshProUGUI>();
+        distanceTextUI.text = "";
+
     }
 
     public void SetFlightline(LineRenderer lr)
@@ -61,7 +65,10 @@ public class MeasurementManager : MonoBehaviour
             int indexB = GetClosestIndexOnLine(activeFlightline, b);
 
             if (indexA > indexB)
+            {
                 (indexA, indexB) = (indexB, indexA);
+                (a, b) = (b, a);
+            }
 
             if (Mathf.Abs(indexA - indexB) < 2) return;
 
@@ -69,8 +76,6 @@ public class MeasurementManager : MonoBehaviour
             for (int i = indexA; i <= indexB; i++)
                 curve.Add(activeFlightline.GetPosition(i));
 
-            curve.Insert(0, a);
-            curve.Add(b);
 
             SetLineAndLabel(curve);
             return;
@@ -115,8 +120,12 @@ public class MeasurementManager : MonoBehaviour
         distanceText.transform.rotation = Quaternion.LookRotation(lookDirection);
         distanceText.transform.Rotate(0f, 180f, 0f);
 
+        if (dotA == null) dotA = Instantiate(dotPrefab);
+        if (dotB == null) dotB = Instantiate(dotPrefab);
+
         dotA.transform.position = path[0];
-        dotB.transform.position = path[path.Count - 1];
+        dotB.transform.position = path[^1]; // or path[path.Count - 1]
+
     }
 
     private Vector3 GetMidpointAlongCurve(List<Vector3> points)
