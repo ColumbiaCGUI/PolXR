@@ -30,7 +30,7 @@ public class MeasurementManager : MonoBehaviour
         distanceText.name = "DistanceText";
 
         lineRenderer = line.GetComponentInChildren<LineRenderer>();
-        lineRenderer.material.color = Color.blue;
+        lineRenderer.material.color = new Color(0f, 0.7f, 0.7f);
 
         distanceTextUI = distanceText.transform.Find("Canvas/DistanceLabel").GetComponent<TextMeshProUGUI>();
         distanceTextUI.text = "";
