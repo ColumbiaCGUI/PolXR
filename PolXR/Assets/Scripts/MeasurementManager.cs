@@ -17,6 +17,10 @@ public class MeasurementManager : MonoBehaviour
     private TextMeshProUGUI distanceTextUI;
     private LineRenderer activeFlightline;
 
+    public enum DistanceUnit { Meters, Kilometers }
+    public DistanceUnit currentUnit = DistanceUnit.Meters;
+
+
     void Start()
     {
         line = Instantiate(linePrefab);
@@ -32,6 +36,15 @@ public class MeasurementManager : MonoBehaviour
         distanceTextUI.text = "";
 
     }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            ToggleUnit();
+        }
+    }
+
 
     public void SetFlightline(LineRenderer lr)
     {
@@ -109,8 +122,16 @@ public class MeasurementManager : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
             distance += Vector3.Distance(path[i - 1], path[i]);
         distance *= 10000f;
+        if (currentUnit == DistanceUnit.Meters)
+        {
+            distanceTextUI.text = $"{distance:F2} meters";
+        }
+        else if (currentUnit == DistanceUnit.Kilometers)
+        {
+            distanceTextUI.text = $"{distance / 1000f:F2} km";
+        }
 
-        distanceTextUI.text = $"{distance:F2} meters";
+
 
         Vector3 midpoint = GetMidpointAlongCurve(path);
         distanceText.transform.position = midpoint + new Vector3(0, 0.05f, 0);
@@ -244,4 +265,22 @@ public class MeasurementManager : MonoBehaviour
 
         return closestIndex;
     }
+
+    public void ToggleUnit()
+    {
+        currentUnit = currentUnit == DistanceUnit.Meters ? DistanceUnit.Kilometers : DistanceUnit.Meters;
+        Debug.Log("Distance unit changed to: " + currentUnit);
+
+        // Reapply label with current path, if it exists
+        if (lineRenderer != null && lineRenderer.positionCount > 1)
+        {
+            List<Vector3> currentPath = new();
+            for (int i = 0; i < lineRenderer.positionCount; i++)
+                currentPath.Add(lineRenderer.GetPosition(i));
+
+            SetLineAndLabel(currentPath);
+        }
+
+    }
+
 }
