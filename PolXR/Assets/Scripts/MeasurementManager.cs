@@ -23,17 +23,6 @@ public class MeasurementManager : MonoBehaviour
 
     void Start()
     {
-        line = Instantiate(linePrefab);
-        line.name = "MeasurementLine";
-
-        distanceText = Instantiate(distanceTextPrefab);
-        distanceText.name = "DistanceText";
-
-        lineRenderer = line.GetComponentInChildren<LineRenderer>();
-        lineRenderer.material.color = new Color(0f, 0.7f, 0.7f);
-
-        distanceTextUI = distanceText.transform.Find("Canvas/DistanceLabel").GetComponent<TextMeshProUGUI>();
-        distanceTextUI.text = "";
 
     }
 
@@ -115,6 +104,24 @@ public class MeasurementManager : MonoBehaviour
 
     private void SetLineAndLabel(List<Vector3> path)
     {
+        if (path == null || path.Count < 2)
+            return;
+
+        if (line == null)
+        {
+            line = Instantiate(linePrefab);
+            line.name = "MeasurementLine";
+            lineRenderer = line.GetComponentInChildren<LineRenderer>();
+            lineRenderer.material.color = new Color(0f, 0.7f, 0.7f);
+        }
+
+        if (distanceText == null)
+        {
+            distanceText = Instantiate(distanceTextPrefab);
+            distanceText.name = "DistanceText";
+            distanceTextUI = distanceText.transform.Find("Canvas/DistanceLabel").GetComponent<TextMeshProUGUI>();
+        }
+
         lineRenderer.positionCount = path.Count;
         lineRenderer.SetPositions(path.ToArray());
 
@@ -122,19 +129,14 @@ public class MeasurementManager : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
             distance += Vector3.Distance(path[i - 1], path[i]);
         distance *= 10000f;
+
         if (currentUnit == DistanceUnit.Meters)
-        {
             distanceTextUI.text = $"{distance:F2} meters";
-        }
-        else if (currentUnit == DistanceUnit.Kilometers)
-        {
+        else
             distanceTextUI.text = $"{distance / 1000f:F2} km";
-        }
-
-
 
         Vector3 midpoint = GetMidpointAlongCurve(path);
-        distanceText.transform.position = midpoint + new Vector3(0, 0.05f, 0);
+        distanceText.transform.position = midpoint + new Vector3(0, 0.02f, 0);
 
         Vector3 lookDirection = Camera.main.transform.position - distanceText.transform.position;
         lookDirection.y = 0;
@@ -145,9 +147,9 @@ public class MeasurementManager : MonoBehaviour
         if (dotB == null) dotB = Instantiate(dotPrefab);
 
         dotA.transform.position = path[0];
-        dotB.transform.position = path[^1]; // or path[path.Count - 1]
-
+        dotB.transform.position = path[^1];
     }
+
 
     private Vector3 GetMidpointAlongCurve(List<Vector3> points)
     {
