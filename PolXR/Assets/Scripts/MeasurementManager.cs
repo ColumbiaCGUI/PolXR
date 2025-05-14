@@ -1,0 +1,238 @@
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+
+public class MeasurementManager : MonoBehaviour
+{
+    public GameObject linePrefab;
+    public GameObject distanceTextPrefab;
+    public GameObject dotPrefab;
+
+    private GameObject line;
+    private GameObject distanceText;
+    private GameObject dotA;
+    private GameObject dotB;
+
+    private LineRenderer lineRenderer;
+    private TextMeshProUGUI distanceTextUI;
+    private LineRenderer activeFlightline;
+
+    void Start()
+    {
+        line = Instantiate(linePrefab);
+        line.name = "MeasurementLine";
+
+        distanceText = Instantiate(distanceTextPrefab);
+        distanceText.name = "DistanceText";
+
+        lineRenderer = line.GetComponent<LineRenderer>();
+        distanceTextUI = distanceText.transform.Find("Canvas/DistanceLabel").GetComponent<TextMeshProUGUI>();
+    }
+
+    public void SetFlightline(LineRenderer lr)
+    {
+        activeFlightline = lr;
+        Debug.Log($"Flightline set: {lr.name} with {lr.positionCount} points.");
+    }
+
+    public void SetMeasurementPoints(Vector3 a, Vector3 b)
+    {
+        if (lineRenderer != null)
+            lineRenderer.positionCount = 0;
+
+        if (dotA == null) dotA = Instantiate(dotPrefab);
+        if (dotB == null) dotB = Instantiate(dotPrefab);
+
+        dotA.transform.position = a;
+        dotB.transform.position = b;
+
+        bool onFlightlineA = IsSnappedToFlightline(a);
+        bool onFlightlineB = IsSnappedToFlightline(b);
+        bool onRadargramA = IsSnappedToRadargram(a);
+        bool onRadargramB = IsSnappedToRadargram(b);
+
+        Debug.Log($"[SetMeasurementPoints] onFlightlineA={onFlightlineA}, onFlightlineB={onFlightlineB}, onRadargramA={onRadargramA}, onRadargramB={onRadargramB}");
+
+
+        // --- Case 1: Draw curved line along flightline ---
+        if (onFlightlineA && onFlightlineB && activeFlightline != null && activeFlightline.positionCount > 1)
+        {
+            int indexA = GetClosestIndexOnLine(activeFlightline, a);
+            int indexB = GetClosestIndexOnLine(activeFlightline, b);
+
+            if (indexA > indexB)
+                (indexA, indexB) = (indexB, indexA);
+
+            if (Mathf.Abs(indexA - indexB) < 2) return;
+
+            List<Vector3> curve = new();
+            for (int i = indexA; i <= indexB; i++)
+                curve.Add(activeFlightline.GetPosition(i));
+
+            curve.Insert(0, a);
+            curve.Add(b);
+
+            SetLineAndLabel(curve);
+            return;
+        }
+
+        // --- Case 2: Radargram mesh curved mode ---
+        if (onRadargramA && onRadargramB)
+        {
+            Transform meshA = FindRadargramMesh(a);
+            Transform meshB = FindRadargramMesh(b);
+
+            if (meshA != null && meshB != null && meshA == meshB)
+            {
+                List<Vector3> path = SampleRadargramMesh(meshA, a, b);
+                SetLineAndLabel(path);
+                return;
+            }
+        }
+
+        // --- Case 3: Default straight line ---
+        SetLineAndLabel(new List<Vector3>() { a, b });
+    }
+
+
+    private void SetLineAndLabel(List<Vector3> path)
+    {
+        lineRenderer.positionCount = path.Count;
+        lineRenderer.SetPositions(path.ToArray());
+
+        float distance = 0f;
+        for (int i = 1; i < path.Count; i++)
+            distance += Vector3.Distance(path[i - 1], path[i]);
+        distance *= 10000f;
+
+        distanceTextUI.text = $"{distance:F2} meters";
+
+        Vector3 midpoint = GetMidpointAlongCurve(path);
+        distanceText.transform.position = midpoint + new Vector3(0, 0.05f, 0);
+
+        Vector3 lookDirection = Camera.main.transform.position - distanceText.transform.position;
+        lookDirection.y = 0;
+        distanceText.transform.rotation = Quaternion.LookRotation(lookDirection);
+        distanceText.transform.Rotate(0f, 180f, 0f);
+
+        dotA.transform.position = path[0];
+        dotB.transform.position = path[path.Count - 1];
+    }
+
+    private Vector3 GetMidpointAlongCurve(List<Vector3> points)
+    {
+        if (points == null || points.Count < 2)
+            return Vector3.zero;
+
+        float totalDist = 0f;
+        for (int i = 1; i < points.Count; i++)
+            totalDist += Vector3.Distance(points[i - 1], points[i]);
+
+        float halfDist = totalDist / 2f;
+        float runningDist = 0f;
+
+        for (int i = 1; i < points.Count; i++)
+        {
+            float segment = Vector3.Distance(points[i - 1], points[i]);
+            runningDist += segment;
+            if (runningDist >= halfDist)
+                return (points[i - 1] + points[i]) / 2f;
+        }
+
+        return (points[0] + points[points.Count - 1]) / 2f;
+    }
+
+    private bool IsSnappedToRadargram(Vector3 pos)
+    {
+        Collider[] hits = Physics.OverlapSphere(pos, 0.07f);
+        foreach (var hit in hits)
+        {
+            if (hit.gameObject.name == "mesh" &&
+                hit.transform.parent != null &&
+                hit.transform.parent.name.StartsWith("Data_"))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private bool IsSnappedToFlightline(Vector3 pos)
+    {
+        Collider[] hits = Physics.OverlapSphere(pos, 0.05f);
+        foreach (var hit in hits)
+        {
+            if (hit.name.StartsWith("Flightline") && hit.GetComponent<LineRenderer>() != null)
+            {
+                Transform parent = hit.transform.parent;
+                if (parent == null || !parent.name.StartsWith("Data_"))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+    private Transform FindRadargramMesh(Vector3 pos)
+    {
+        Collider[] hits = Physics.OverlapSphere(pos, 0.07f);
+        foreach (var hit in hits)
+        {
+            if (hit.gameObject.name == "mesh" &&
+                hit.transform.parent != null &&
+                hit.transform.parent.name.StartsWith("Data_"))
+            {
+                return hit.transform;
+            }
+        }
+        return null;
+    }
+
+
+    private List<Vector3> SampleRadargramMesh(Transform radarMesh, Vector3 start, Vector3 end, int samples = 100)
+    {
+        List<Vector3> points = new List<Vector3>();
+        int radarLayer = LayerMask.GetMask("Radargram");
+        Vector3 localUp = radarMesh.up;
+
+        for (int i = 0; i <= samples; i++)
+        {
+            float t = i / (float)samples;
+            Vector3 worldPos = Vector3.Lerp(start, end, t);
+            Vector3 rayOrigin = worldPos - localUp * 2f;
+            Vector3 rayDir = localUp;
+
+            if (Physics.Raycast(rayOrigin, rayDir, out RaycastHit hit, 5f, radarLayer))
+            {
+                points.Add(hit.point + hit.normal * 0.01f);
+            }
+            else
+            {
+                points.Add(worldPos);
+            }
+        }
+
+        return points;
+    }
+
+    private int GetClosestIndexOnLine(LineRenderer line, Vector3 point)
+    {
+        float minDist = float.MaxValue;
+        int closestIndex = 0;
+
+        for (int i = 0; i < line.positionCount; i++)
+        {
+            float dist = Vector3.Distance(point, line.GetPosition(i));
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closestIndex = i;
+            }
+        }
+
+        return closestIndex;
+    }
+}

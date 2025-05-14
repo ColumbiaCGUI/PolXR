@@ -707,6 +707,11 @@ public class DataLoader : MonoBehaviour
                 {
                     child.gameObject.GetComponent<LineRenderer>().material.color = Color.green;
                     radarMenu.SetActive(true);
+                    LineRenderer selectedLineRenderer = child.GetComponent<LineRenderer>();
+                    if (selectedLineRenderer != null)
+                    {
+                        FindObjectOfType<MeasurementManager>()?.SetFlightline(selectedLineRenderer);
+                    }
                 }
                 else
                 {
