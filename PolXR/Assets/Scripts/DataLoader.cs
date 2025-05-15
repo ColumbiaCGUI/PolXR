@@ -451,7 +451,7 @@ public class DataLoader : MonoBehaviour
 
                         //XRGeneralGrabTransformer IradarGrabTransformer = radarMesh.AddComponent<XRGeneralGrabTransformer>();
                         //GrabTransformerRotationAxisLock LockObj = radarMesh.AddComponent<GrabTransformerRotationAxisLock>(); //Sample Script Changed
-
+                        RadarEvents thisRadarEvent= radarMesh.AddComponent<RadarEvents>();
 
                         int RadarGramLayer = LayerMask.NameToLayer("Radargram");
                         radarMesh.layer = RadarGramLayer;
@@ -707,6 +707,7 @@ public class DataLoader : MonoBehaviour
                 {
                     child.gameObject.GetComponent<LineRenderer>().material.color = Color.green;
                     radarMenu.SetActive(true);
+                    SetRadarGramMenu(child);
                 }
                 else
                 {
@@ -822,6 +823,22 @@ public class DataLoader : MonoBehaviour
             GameObject.Find("MainMenu/Buttons/ButtonLoadScene").GetComponent<Button>(); // NOT IMPLEMENTED
         Button mmHomeScreen =
             GameObject.Find("MainMenu/Buttons/ButtonHomeScreen").GetComponent<Button>(); // NOT IMPLEMENTED
+    }
+
+    private void SetRadarGramMenu(Transform selectedFlightline){
+        GameObject selectedRadar= selectedFlightline.parent.GetChild(0).GetChild(0).gameObject;
+        
+        //Opacity logic
+        Slider rmOpacity= GameObject.Find("RadarMenu/Sliders/Opacity").GetComponent<Slider>();
+        rmOpacity.onValueChanged.RemoveAllListeners();
+        rmOpacity.value=selectedRadar.GetComponent<RadarEvents>().alpha;
+        rmOpacity.onValueChanged.AddListener((value)=>selectedRadar.GetComponent<RadarEvents>().UpdateOpacity(value));
+
+        //Z exaggeration logic
+        Slider rmZExag= GameObject.Find("RadarMenu/Sliders/ZSlider").GetComponent<Slider>();
+        rmZExag.onValueChanged.RemoveAllListeners();
+        rmZExag.value=selectedRadar.GetComponent<RadarEvents>().scaleZ;
+        rmZExag.onValueChanged.AddListener((value)=>selectedRadar.GetComponent<RadarEvents>().SetScaleZ(value)); 
     }
 
     void DisableMenus()
