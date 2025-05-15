@@ -24,6 +24,8 @@ public class MeasurementManager : MonoBehaviour
     public float tickSpacing = 0.5f; // in Unity units (adjust for density)
     private List<GameObject> activeTicks = new();
 
+    public MeasurementExporter exporter;
+
     void Start()
     {
 
@@ -165,11 +167,13 @@ public class MeasurementManager : MonoBehaviour
         }
 
         lineRenderer.positionCount = path.Count;
+        Vector3[] elevatedPath = new Vector3[path.Count];
         for (int i = 0; i < path.Count; i++)
         {
-            path[i] += Vector3.up * 0.01f; // subtle offset to avoid z-fighting
+            elevatedPath[i] = path[i] + Vector3.up * 0.01f;
         }
-        lineRenderer.SetPositions(path.ToArray());
+        lineRenderer.SetPositions(elevatedPath);
+
 
         float distance = 0f;
         for (int i = 1; i < path.Count; i++)
@@ -196,6 +200,17 @@ public class MeasurementManager : MonoBehaviour
         dotB.transform.position = path[^1];
 
         CreateTickMarks(path);
+        if (exporter != null)
+        {
+            List<Vector3> tickPositions = new();
+            foreach (var tick in activeTicks)
+            {
+                tickPositions.Add(tick.transform.position);
+            }
+
+            exporter.ExportTickMarks(tickPositions, path[0], path[^1], distance);
+        }
+
     }
 
     private Vector3 GetMidpointAlongCurve(List<Vector3> points)
