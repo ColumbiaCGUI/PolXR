@@ -746,6 +746,11 @@ public class DataLoader : MonoBehaviour
         }
     }
 
+    void ToggleTeleportation(bool arg0)
+    {
+       // TODO
+    }
+
     void ToggleRadargram(bool arg0)
     {
         // TODO
@@ -791,10 +796,12 @@ public class DataLoader : MonoBehaviour
             GameObject.Find("MainMenu/Toggles/Flightlines Toggle").GetComponent<Toggle>();
         Toggle mainMenuSurfaceDEMToggle = GameObject.Find("MainMenu/Toggles/Surface DEM Toggle").GetComponent<Toggle>();
         Toggle mainMenuBaseDEMToggle = GameObject.Find("MainMenu/Toggles/Base DEM Toggle").GetComponent<Toggle>();
+         Toggle mainMenuTeleportToggle = GameObject.Find("MainMenu/Toggles/Teleportation Toggle").GetComponent<Toggle>();
 
         radarMenuSurfaceDEMToggle.onValueChanged.AddListener(ToggleSurfaceDEM);
         mainMenuSurfaceDEMToggle.onValueChanged.AddListener(ToggleSurfaceDEM);
         mainMenuBaseDEMToggle.onValueChanged.AddListener(ToggleBaseDEM);
+        mainMenuTeleportToggle.onValueChanged.AddListener(ToggleTeleportation);
 
         radarMenuRadargramToggle.onValueChanged.AddListener(ToggleRadargram);
         mainMenuFlightlinesToggle.onValueChanged.AddListener(ToggleFlightlines);
