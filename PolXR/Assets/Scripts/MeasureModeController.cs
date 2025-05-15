@@ -3,7 +3,7 @@ using UnityEngine;
 public class MeasureModeController : MonoBehaviour
 {
     public static bool IsMeasureModeActive { get; private set; } = false;
-    public KeyCode toggleKey = KeyCode.M; // Press 'M' to toggle measure mode
+    public KeyCode toggleKey = KeyCode.M; 
 
     void Update()
     {

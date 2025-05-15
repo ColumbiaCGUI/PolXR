@@ -35,8 +35,15 @@ public class MeasurementManager : MonoBehaviour
         {
             ToggleUnit();
         }
-    }
 
+        if (distanceText != null)
+        {
+            Vector3 lookDirection = Camera.main.transform.position - distanceText.transform.position;
+            lookDirection.y = 0;
+            distanceText.transform.rotation = Quaternion.LookRotation(lookDirection);
+            distanceText.transform.Rotate(0f, 180f, 0f);
+        }
+    }
 
     public void SetFlightline(LineRenderer lr)
     {
@@ -61,7 +68,6 @@ public class MeasurementManager : MonoBehaviour
         bool onRadargramB = IsSnappedToRadargram(b);
 
         Debug.Log($"[SetMeasurementPoints] onFlightlineA={onFlightlineA}, onFlightlineB={onFlightlineB}, onRadargramA={onRadargramA}, onRadargramB={onRadargramB}");
-
 
         // --- Case 1: Draw curved line along flightline ---
         if (onFlightlineA && onFlightlineB && activeFlightline != null && activeFlightline.positionCount > 1)
@@ -104,12 +110,10 @@ public class MeasurementManager : MonoBehaviour
 
     private void CreateTickMarks(List<Vector3> path)
     {
-        // Cleanup old ticks
         foreach (var tick in activeTicks)
             Destroy(tick);
         activeTicks.Clear();
 
-        // Walk along the path and insert ticks every tickSpacing meters
         float accumulated = 0f;
         Vector3 previous = path[0];
 
@@ -126,8 +130,9 @@ public class MeasurementManager : MonoBehaviour
 
                 GameObject tick = Instantiate(tickMarkPrefab, tickPos, Quaternion.identity);
                 tick.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+                tick.GetComponent<Renderer>().material.color = Color.white;
 
-                tick.transform.LookAt(current); // optional: align tick direction
+                tick.transform.LookAt(current); 
                 activeTicks.Add(tick);
             }
 
@@ -139,8 +144,6 @@ public class MeasurementManager : MonoBehaviour
         }
     }
 
-
-
     private void SetLineAndLabel(List<Vector3> path)
     {
         if (path == null || path.Count < 2)
@@ -151,8 +154,7 @@ public class MeasurementManager : MonoBehaviour
             line = Instantiate(linePrefab);
             line.name = "MeasurementLine";
             lineRenderer = line.GetComponentInChildren<LineRenderer>();
-            lineRenderer.material.color = new Color(0f, 0.7f, 0.7f);
-
+            lineRenderer.material.color = Color.white;
         }
 
         if (distanceText == null)
@@ -163,6 +165,10 @@ public class MeasurementManager : MonoBehaviour
         }
 
         lineRenderer.positionCount = path.Count;
+        for (int i = 0; i < path.Count; i++)
+        {
+            path[i] += Vector3.up * 0.01f; // subtle offset to avoid z-fighting
+        }
         lineRenderer.SetPositions(path.ToArray());
 
         float distance = 0f;
@@ -191,7 +197,6 @@ public class MeasurementManager : MonoBehaviour
 
         CreateTickMarks(path);
     }
-
 
     private Vector3 GetMidpointAlongCurve(List<Vector3> points)
     {
@@ -231,7 +236,6 @@ public class MeasurementManager : MonoBehaviour
         return false;
     }
 
-
     private bool IsSnappedToFlightline(Vector3 pos)
     {
         Collider[] hits = Physics.OverlapSphere(pos, 0.05f);
@@ -249,7 +253,6 @@ public class MeasurementManager : MonoBehaviour
         return false;
     }
 
-
     private Transform FindRadargramMesh(Vector3 pos)
     {
         Collider[] hits = Physics.OverlapSphere(pos, 0.07f);
@@ -265,8 +268,7 @@ public class MeasurementManager : MonoBehaviour
         return null;
     }
 
-
-    private List<Vector3> SampleRadargramMesh(Transform radarMesh, Vector3 start, Vector3 end, int samples = 100)
+    private List<Vector3> SampleRadargramMesh(Transform radarMesh, Vector3 start, Vector3 end, int samples = 200)
     {
         List<Vector3> points = new List<Vector3>();
         int radarLayer = LayerMask.GetMask("Radargram");
@@ -288,7 +290,6 @@ public class MeasurementManager : MonoBehaviour
                 points.Add(worldPos);
             }
         }
-
         return points;
     }
 
@@ -306,15 +307,12 @@ public class MeasurementManager : MonoBehaviour
                 closestIndex = i;
             }
         }
-
         return closestIndex;
     }
 
     public void ToggleUnit()
     {
         currentUnit = currentUnit == DistanceUnit.Meters ? DistanceUnit.Kilometers : DistanceUnit.Meters;
-        Debug.Log("Distance unit changed to: " + currentUnit);
-
         // Reapply label with current path, if it exists
         if (lineRenderer != null && lineRenderer.positionCount > 1)
         {

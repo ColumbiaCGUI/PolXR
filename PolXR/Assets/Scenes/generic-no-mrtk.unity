@@ -773,6 +773,9 @@ MonoBehaviour:
   linePrefab: {fileID: 7883657111215739402, guid: 3c50fda9af3ca42cda02b84175319312, type: 3}
   distanceTextPrefab: {fileID: 8596879676074436776, guid: 7ae985fc594174942b4e9ea6fddc0674, type: 3}
   dotPrefab: {fileID: 6049710035095504069, guid: 83ef3999b760b42c5bd85af67a7e1d44, type: 3}
+  currentUnit: 0
+  tickMarkPrefab: {fileID: 1410584632474642199, guid: 368651f95fb214265bc31d965eedd07c, type: 3}
+  tickSpacing: 0.18
 --- !u!224 &1016427396 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6520855330095075292, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}

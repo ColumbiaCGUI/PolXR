@@ -13,7 +13,6 @@ public class XRMeasurePlacer : MonoBehaviour
     private Vector3? pointB = null;
     private GameObject previewDot;
 
-
     void OnEnable()
     {
         placeAction.action.performed += OnPlacePressed;
@@ -43,9 +42,8 @@ public class XRMeasurePlacer : MonoBehaviour
         if (rayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit hit))
         {
             Vector3 hitPoint = hit.point;
-
-            // Try to auto-set active flightline if nearby
             Collider[] nearby = Physics.OverlapSphere(hitPoint, 0.1f);
+
             foreach (var col in nearby)
             {
                 if (col.name.StartsWith("Flightline"))
@@ -54,7 +52,6 @@ public class XRMeasurePlacer : MonoBehaviour
                     if (lr != null)
                     {
                         measurementManager.SetFlightline(lr);
-                        Debug.Log("[XRMeasurePlacer] Flightline automatically set from hit.");
                         break;
                     }
                 }
@@ -77,7 +74,6 @@ public class XRMeasurePlacer : MonoBehaviour
                     Destroy(previewDot);
                     previewDot = null;
                 }
-
             }
             else
             {
