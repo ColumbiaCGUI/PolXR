@@ -843,7 +843,8 @@ public class DataLoader : MonoBehaviour
         //Z exaggeration logic
         Slider rmZExag= GameObject.Find("RadarMenu/Sliders/ZSlider").GetComponent<Slider>();
         rmZExag.onValueChanged.RemoveAllListeners();
-        rmZExag.value=selectedRadar.GetComponent<RadarEvents>().scaleZ;
+        //rmZExag.value=selectedRadar.GetComponent<RadarEvents>().scaleZ;
+        rmZExag.value=1.0f;//doing this because scale to set to 1 at deselection
         rmZExag.onValueChanged.AddListener((value)=>selectedRadar.GetComponent<RadarEvents>().SetScaleZ(value)); 
     }
 

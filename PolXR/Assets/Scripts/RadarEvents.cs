@@ -40,32 +40,35 @@ public class RadarEvents : MonoBehaviour
     protected Vector3 newPointPos;
     protected Color markColor;
 
-    public float originalHeight;
     GameObject rmZExagText;
 
     void Start()
     {
         transform.localScale = new Vector3(scaleX,scaleY,scaleZ);
-        originalHeight= 2000; //lets just assume original height is 2000 m
         rmZExagText = GameObject.Find("RadarMenu/Texts/Scaling Sliders/Z Scaling Text");
     }
 
     // Return the original scale.
     public Vector3 GetScale() { 
-        return new Vector3(this.transform.localScale.x, this.transform.localScale.y, this.transform.localScale.z); 
+        return new Vector3(transform.localScale.x, transform.localScale.y, transform.localScale.z); 
     }
 
     public void SetScaleVar(){
-        scaleX = this.transform.localScale.x;
-        scaleY = this.transform.localScale.y;
-        scaleZ = this.transform.localScale.y;
+        scaleX = transform.localScale.x;
+        scaleY = transform.localScale.y;
+        scaleZ = transform.localScale.z;
     }
     public void SetScaleZ(float zScale){
-        transform.localScale = new Vector3(this.transform.localScale.x,this.transform.localScale.y,zScale);
-        float newHeight=originalHeight*zScale;
+        Vector3 originalScale=GetScale();
+        transform.localScale = new Vector3(transform.localScale.x,transform.localScale.y,zScale);
         SetScaleVar();
-     
-        rmZExagText.GetComponent<TextMeshPro>().text=$"Original:   {originalHeight} m\n Current:    {newHeight} m\n Strain:      {Math.Abs(originalHeight-newHeight)} m";
+        rmZExagText.GetComponent<TextMeshPro>().text = string.Format(
+                    "Original:   {0} m \n" +
+                    "Current:    {1} m \n" +
+                    "Strain:     {2}",
+                    (originalScale.z).ToString(),
+                    (transform.localScale.z).ToString(),
+                    (Math.Abs(originalScale.z - transform.localScale.z)).ToString());
     }
 
     /*
