@@ -1,5 +1,6 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 
 public class MeasurementManager : MonoBehaviour
@@ -37,7 +38,6 @@ public class MeasurementManager : MonoBehaviour
         {
             ToggleUnit();
         }
-
         if (distanceText != null)
         {
             Vector3 lookDirection = Camera.main.transform.position - distanceText.transform.position;
@@ -50,7 +50,6 @@ public class MeasurementManager : MonoBehaviour
     public void SetFlightline(LineRenderer lr)
     {
         activeFlightline = lr;
-        Debug.Log($"Flightline set: {lr.name} with {lr.positionCount} points.");
     }
 
     public void SetMeasurementPoints(Vector3 a, Vector3 b)
@@ -68,10 +67,9 @@ public class MeasurementManager : MonoBehaviour
         bool onFlightlineB = IsSnappedToFlightline(b);
         bool onRadargramA = IsSnappedToRadargram(a);
         bool onRadargramB = IsSnappedToRadargram(b);
-
         Debug.Log($"[SetMeasurementPoints] onFlightlineA={onFlightlineA}, onFlightlineB={onFlightlineB}, onRadargramA={onRadargramA}, onRadargramB={onRadargramB}");
 
-        // --- Case 1: Draw curved line along flightline ---
+        // Case 1: Draw curved line along flightline 
         if (onFlightlineA && onFlightlineB && activeFlightline != null && activeFlightline.positionCount > 1)
         {
             int indexA = GetClosestIndexOnLine(activeFlightline, a);
@@ -92,7 +90,7 @@ public class MeasurementManager : MonoBehaviour
             return;
         }
 
-        // --- Case 2: Radargram mesh curved mode ---
+        // Case 2: Radargram mesh curved mode
         if (onRadargramA && onRadargramB)
         {
             Transform meshA = FindRadargramMesh(a);
@@ -106,7 +104,7 @@ public class MeasurementManager : MonoBehaviour
             }
         }
 
-        // --- Case 3: Default straight line ---
+        // Case 3: Default straight line
         SetLineAndLabel(new List<Vector3>() { a, b });
     }
 
@@ -325,6 +323,18 @@ public class MeasurementManager : MonoBehaviour
         return closestIndex;
     }
 
+    public void ClearMeasurement()
+    {
+        if (line != null) Destroy(line);
+        if (dotA != null) Destroy(dotA);
+        if (dotB != null) Destroy(dotB);
+        if (distanceText != null) Destroy(distanceText);
+
+        foreach (var tick in activeTicks)
+            Destroy(tick);
+        activeTicks.Clear();
+    }
+
     public void ToggleUnit()
     {
         currentUnit = currentUnit == DistanceUnit.Meters ? DistanceUnit.Kilometers : DistanceUnit.Meters;
@@ -337,7 +347,5 @@ public class MeasurementManager : MonoBehaviour
 
             SetLineAndLabel(currentPath);
         }
-
     }
-
 }

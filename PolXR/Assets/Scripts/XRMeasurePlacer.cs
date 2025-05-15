@@ -64,7 +64,6 @@ public class XRMeasurePlacer : MonoBehaviour
                 if (previewDot != null) Destroy(previewDot);
                 previewDot = Instantiate(markerPrefab, hitPoint, Quaternion.identity);
             }
-
             else if (pointB == null)
             {
                 pointB = hitPoint;
