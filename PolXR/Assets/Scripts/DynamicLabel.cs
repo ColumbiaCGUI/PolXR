@@ -47,6 +47,8 @@ public class DynamicLabel : MonoBehaviour
 
         updatePosition();
         this.gameObject.SetActive(true);
+
+
     }
 
     // Update method for every frame.

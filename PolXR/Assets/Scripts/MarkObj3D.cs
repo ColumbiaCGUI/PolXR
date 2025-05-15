@@ -105,7 +105,7 @@ public class MarkObj3D : MonoBehaviour
                     );
                     
                 }
-
+                
                 for (int j = 0; (j - 1) * intervalXY.y < radarOriginalScale.y * 100; j++)
                 {
                     GameObject newLabel = Instantiate(xyAxisLabel, labels);
