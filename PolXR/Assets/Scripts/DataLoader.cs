@@ -826,7 +826,13 @@ public class DataLoader : MonoBehaviour
     }
 
     private void SetRadarGramMenu(Transform selectedFlightline){
-        GameObject selectedRadar= selectedFlightline.parent.GetChild(0).GetChild(0).gameObject;
+        GameObject selectedRadar;
+        if(selectedFlightline.parent.GetChild(0).name.StartsWith("Data")){
+            selectedRadar= selectedFlightline.parent.GetChild(0).GetChild(0).gameObject;
+        }
+        else{
+            selectedRadar= selectedFlightline.parent.GetChild(1).GetChild(0).gameObject;
+        }
         
         //Opacity logic
         Slider rmOpacity= GameObject.Find("RadarMenu/Sliders/Opacity").GetComponent<Slider>();
