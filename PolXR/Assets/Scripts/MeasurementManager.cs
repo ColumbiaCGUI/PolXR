@@ -20,6 +20,9 @@ public class MeasurementManager : MonoBehaviour
     public enum DistanceUnit { Meters, Kilometers }
     public DistanceUnit currentUnit = DistanceUnit.Meters;
 
+    public GameObject tickMarkPrefab;
+    public float tickSpacing = 0.5f; // in Unity units (adjust for density)
+    private List<GameObject> activeTicks = new();
 
     void Start()
     {
@@ -72,8 +75,6 @@ public class MeasurementManager : MonoBehaviour
                 (a, b) = (b, a);
             }
 
-            if (Mathf.Abs(indexA - indexB) < 2) return;
-
             List<Vector3> curve = new();
             for (int i = indexA; i <= indexB; i++)
                 curve.Add(activeFlightline.GetPosition(i));
@@ -101,6 +102,44 @@ public class MeasurementManager : MonoBehaviour
         SetLineAndLabel(new List<Vector3>() { a, b });
     }
 
+    private void CreateTickMarks(List<Vector3> path)
+    {
+        // Cleanup old ticks
+        foreach (var tick in activeTicks)
+            Destroy(tick);
+        activeTicks.Clear();
+
+        // Walk along the path and insert ticks every tickSpacing meters
+        float accumulated = 0f;
+        Vector3 previous = path[0];
+
+        for (int i = 1; i < path.Count; i++)
+        {
+            Vector3 current = path[i];
+            float segmentLength = Vector3.Distance(previous, current);
+            Vector3 dir = (current - previous).normalized;
+
+            while (accumulated + tickSpacing <= segmentLength)
+            {
+                accumulated += tickSpacing;
+                Vector3 tickPos = previous + dir * accumulated;
+
+                GameObject tick = Instantiate(tickMarkPrefab, tickPos, Quaternion.identity);
+                tick.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f);
+
+                tick.transform.LookAt(current); // optional: align tick direction
+                activeTicks.Add(tick);
+            }
+
+            accumulated = (accumulated + tickSpacing > segmentLength)
+                          ? accumulated + tickSpacing - segmentLength
+                          : 0f;
+
+            previous = current;
+        }
+    }
+
+
 
     private void SetLineAndLabel(List<Vector3> path)
     {
@@ -113,6 +152,7 @@ public class MeasurementManager : MonoBehaviour
             line.name = "MeasurementLine";
             lineRenderer = line.GetComponentInChildren<LineRenderer>();
             lineRenderer.material.color = new Color(0f, 0.7f, 0.7f);
+
         }
 
         if (distanceText == null)
@@ -148,6 +188,8 @@ public class MeasurementManager : MonoBehaviour
 
         dotA.transform.position = path[0];
         dotB.transform.position = path[^1];
+
+        CreateTickMarks(path);
     }
 
 
