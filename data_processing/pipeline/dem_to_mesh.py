@@ -6,43 +6,73 @@ import os, json
 import pandas as pd
 import open3d as o3d
 import numpy as np
+import rasterio
+import trimesh
 from pipeline.center_mesh import center_obj
 
-def dem_to_mesh(dem_name: str, filename: str, depth: int):
+def dem_to_mesh(dem_name: str, filename: str):
     """
-    Converts a DEM file in XYZ format into a mesh and outputs it as an OBJ file.
+    Converts a DEM file in GeoTIF format into a mesh and outputs it as an OBJ file.
 
     Parameters:
     - dem_name (str): Name of the DEM dataset (e.g., 'Petermann').
-    - filename (str): Name of the file to process (e.g., 'surface.xyz').
+    - filename (str): Name of the file to process (e.g., 'surface.tif').
 
     Output:
-    The mesh is saved to PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.xyz', '.obj')}.
+    The mesh is saved to PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}.
     """
     # Construct file paths
     input_path = f"pipeline/dems/{dem_name}/{filename}"
-    output_path = f"../PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.xyz', '.obj')}"
+    output_path = f"../PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}"
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
        
-    # Load XYZ Pointcloud
-    pcd = o3d.io.read_point_cloud(input_path,format='xyz')
+    # Load GeoTIF
+    tif = rasterio.open(input_path)
+    
+    # Read the elevation data (band 1)
+    elevation = tif.read(1)
 
-    # Estimate normals for the point cloud
-    pcd.estimate_normals()
+    # Get affine transformation to convert from pixel coordinates to geospatial coordinates
+    transform = tif.transform
+    
+    # Generate mesh vertices
+    rows, cols = elevation.shape
+    vertices = []
 
-    # Create mesh with poisson surface correction
-    mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-        pcd, depth=depth
-    )
+    for row in range(rows):
+        for col in range(cols):
+            # Transform pixel coordinates to geospatial coordinates (x, y)
+            x, y = transform * (col, row)
+            z = elevation[row, col]
+            vertices.append([x, y, z])
 
-    # Removing edge warping
-    bbox = pcd.get_axis_aligned_bounding_box()
-    cropped_mesh = mesh.crop(bbox)
+    vertices = np.array(vertices)
+    
+    # Generate mesh faces (each pixel is a quad, which we will convert to two triangles)
+    faces = []
+
+    for row in range(rows - 1):
+        for col in range(cols - 1):
+            # Get vertex indices for the current quad
+            v0 = row * cols + col
+            v1 = v0 + 1
+            v2 = (row + 1) * cols + col
+            v3 = v2 + 1
+            
+            # Split quad into two triangles
+            faces.append([v0, v1, v2])  # First triangle
+            faces.append([v1, v3, v2])  # Second triangle
+
+    faces = np.array(faces)
+
+    # Create the mesh using trimesh
+    mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
 
     # Save mesh as OBJ
-    o3d.io.write_triangle_mesh(output_path, cropped_mesh)
+    #o3d.io.write_triangle_mesh(output_path, mesh)
+    mesh.export(output_path)
 
     # Calculate centroid
     vertices = np.asarray(mesh.vertices)
@@ -63,7 +93,7 @@ def dem_to_mesh(dem_name: str, filename: str, depth: int):
     print(f"Mesh saved to {output_path}")
 
 
-def stage_dems(dem_name: str, depth: int = 9):
+def stage_dems(dem_name: str):
     """
     Processes and stages both surface and bedrock DEMs for a given DEM name.
 
@@ -71,8 +101,8 @@ def stage_dems(dem_name: str, depth: int = 9):
     - dem_name (str): Name of the DEM dataset (e.g., 'Petermann').
 
     Calls:
-    - dem_to_mesh with 'surface.xyz'
-    - dem_to_mesh with 'bedrock.xyz'
+    - dem_to_mesh with 'surface.tif'
+    - dem_to_mesh with 'bedrock.tif'
     """
-    dem_to_mesh(dem_name, "bedrock.xyz", depth)
-    dem_to_mesh(dem_name, "surface.xyz", depth)
+    dem_to_mesh(dem_name, "bedrock.tif")
+    dem_to_mesh(dem_name, "surface.tif")

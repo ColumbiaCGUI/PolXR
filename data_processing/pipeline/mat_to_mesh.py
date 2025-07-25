@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from scipy.io import loadmat
-#import impdar #a secret tool we will use later to crop radargrams
+#import impdar   #a secret tool we will use later to crop radargrams
 from pipeline.center_mesh import center_obj
 from scipy.io import loadmat
 from scipy.io.matlab import matfile_version
@@ -45,18 +45,17 @@ def cresis_to_mesh(
                 print(f"Unable to determine the version for {file_path}. Error: {e}")
                 return "Unknown"
     
-    #check version and Read Mat
+    # Check version and Read MatFile
     version = check_mat_file_version(matfile)
-
-    if(version=='post'):
-        #The case of Post-7.3
+    
+    if(version=='post'):    # In case of a Post-7.3 file version
         mat = h5py.File(matfile, 'r+')
         data = None
         singletons = dict()
         horizontal = dict()
         vertical = dict()
         for k, v in mat.items():
-            #Check if v is a h5py dataset and convert to np.ndarray
+            # Check if v is a h5py dataset and convert to np.ndarray
             if isinstance(v, h5py.Dataset):
                 v = v[()] 
             
@@ -73,7 +72,7 @@ def cresis_to_mesh(
                     pass
  
     else:
-        #The case of Pre-7.3 Mat file 
+        # If the version is a Pre-7.3 MatFile 
         mat = loadmat(matfile)
         data = None
         singletons = dict()
@@ -95,8 +94,6 @@ def cresis_to_mesh(
                     horizontal[k] = v.flatten()
                     
                     
-
-
     # Convert coordinates to points
     horizontal['geometry'] = gpd.GeoSeries.from_xy(
         horizontal['Longitude'],
@@ -117,7 +114,6 @@ def cresis_to_mesh(
     z = top - 0.5*(cIce * (time - surface.reshape(-1, 1)))
     
 
-
     # Project coordinates to new coordinate system
     if crs_new != crs_old:
         hdf = hdf.to_crs(crs_new)
@@ -130,7 +126,7 @@ def cresis_to_mesh(
     arr[:, :, 2] = z
     arr[:, :, 3] = data
     
-    # clip empty space
+    # Clip empty space  TO-DO
     if clip_noise:
         k = 5 # after this many empty rows, assume we're just seeing noise
         mask = []
@@ -191,7 +187,7 @@ def create_mesh(matfile, outdir, arr, set_origin=False):
         arr[:, :, 1] -= arr[:, :, 1].min()
 
     # write png file
-        #every single pixel gets converted to a full resoltion of 
+        # every single pixel gets converted to a full resoltion img 
     cvals = 20 * np.log10(np.abs(arr[:, :, 3]))
     c = np.abs((cvals - np.min(cvals)) / (np.max(cvals) - np.min(cvals))) * 256
     plt.imsave(out_png, np.flipud(c.T), cmap='gray')
