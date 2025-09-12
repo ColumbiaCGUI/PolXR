@@ -1,10 +1,7 @@
 ﻿//using Microsoft.MixedReality.Toolkit.Input;
 //using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro;
-using System;
 
 public class RadarEvents : MonoBehaviour
 {
@@ -22,61 +19,32 @@ public class RadarEvents : MonoBehaviour
     protected bool loaded = false;
 
     // The transparency value.
-    public float alpha = 1.0f;
+    protected float alpha = 1.0f;
 
     // Keep the original scale.
-    public float scaleX=1.0f;
-    public float scaleY=1.0f;
-    public float scaleZ=1.0f;
+    protected float scaleX, scaleY, scaleZ;
 
     // The original transform.
     protected Vector3 position;
     protected Vector3 rotation;
 
     // The mark shown on the minimap
-    
     public GameObject radarMark;
     protected bool newPointAdded = false;
     protected Vector3 newPointPos;
     protected Color markColor;
 
-    GameObject rmZExagText;
-
     void Start()
     {
-        transform.localScale = new Vector3(scaleX,scaleY,scaleZ);
-        rmZExagText = GameObject.Find("RadarMenu/Texts/Scaling Sliders/Z Scaling Text");
+        scaleX = this.transform.localScale.x;
+        scaleY = this.transform.localScale.y;
+        scaleZ = this.transform.localScale.z;
     }
 
     // Return the original scale.
     public Vector3 GetScale() { 
-        return new Vector3(transform.localScale.x, transform.localScale.y, transform.localScale.z); 
+        return new Vector3(this.transform.localScale.x, this.transform.localScale.y, this.transform.localScale.z); 
     }
-
-    public void SetScaleVar(){
-        scaleX = transform.localScale.x;
-        scaleY = transform.localScale.y;
-        scaleZ = transform.localScale.z;
-    }
-    public void SetScaleZ(float zScale){
-        Vector3 originalScale=GetScale();
-        transform.localScale = new Vector3(transform.localScale.x,transform.localScale.y,zScale);
-        SetScaleVar();
-        rmZExagText.GetComponent<TextMeshPro>().text = string.Format(
-                    "Original:   {0} m \n" +
-                    "Current:    {1} m \n" +
-                    "Strain:     {2}",
-                    (originalScale.z).ToString(),
-                    (transform.localScale.z).ToString(),
-                    (Math.Abs(originalScale.z - transform.localScale.z)).ToString());
-    }
-
-    /*
-    public void SetScaleXY(float xyScale){
-        transform.localScale = new Vector3(xyScale,xyScale, this.transform.localScale.z);
-        SetScale();
-    }
-    */
 
     // Turn on/off the image itself.
     public void ToggleRadar(bool toggle) { }
@@ -90,11 +58,6 @@ public class RadarEvents : MonoBehaviour
         if ((onlyLower && alpha > newAlpha) || !onlyLower) alpha = newAlpha;
         transform.GetChild(0).gameObject.GetComponent<Renderer>().material.color = new Color(1.0f, 1.0f, 1.0f, newAlpha);
         transform.GetChild(1).gameObject.GetComponent<Renderer>().material.color = new Color(1.0f, 1.0f, 1.0f, newAlpha);
-    }
-
-    public void UpdateOpacity(float value){
-        alpha=value;
-        transform.GetComponent<MeshRenderer>().material.color = new Color(1.0f, 1.0f, 1.0f, alpha);
     }
 
     // Sychronize the parameters for the main/radar menu.
