@@ -58,8 +58,8 @@ public class HomeMenuController : MonoBehaviour
     {
         yield return new WaitUntil(() => DataLoader.Instance.copyComplete);
 
-        string demPath = Path.Combine(Application.persistentDataPath, "AppData", "DEMs");
-        string flightlinesPath = Path.Combine(Application.persistentDataPath, "AppData", "Flightlines");
+        string demPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "DEMs");
+        string flightlinesPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "Flightlines");
 
         // Populate DEM dropdown
         TMP_Dropdown demDropdown = sceneDropdown.GetComponentInChildren<TMP_Dropdown>();
@@ -125,7 +125,7 @@ public class HomeMenuController : MonoBehaviour
         if (demDropdown != null)
         {
             string selectedDem = demDropdown.options[demDropdown.value].text;
-            string fullPath = Path.Combine(Application.persistentDataPath, "AppData", "DEMs", selectedDem);
+            string fullPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "DEMs", selectedDem);
             DataLoader.Instance.demDirectoryPath = fullPath;
         }
 
@@ -136,7 +136,7 @@ public class HomeMenuController : MonoBehaviour
             if (dropdown != null)
             {
                 string selectedFlightline = dropdown.options[dropdown.value].text;
-                string fullPath = Path.Combine(Application.persistentDataPath, "AppData", "Flightlines", selectedFlightline);
+                string fullPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "Flightlines", selectedFlightline);
                 DataLoader.Instance.flightlineDirectories.Add(fullPath);
             }
         }
