@@ -12,13 +12,13 @@ def run_radar(kml_url, crs_old=4326, crs_new=3413):
 
     process_flightline(flightline_id, crs_old, crs_new)
 
-def run_dem(dem_dir_name, depth):
+def run_dem(dem_dir_name):
     """
     Handle DEM processing by invoking the `stage_dems` logic.
     """
-    print(f"Running DEM processing for directory: {dem_dir_name} with depth: {depth}")
+    print(f"Running DEM processing for directory: {dem_dir_name}")
     from pipeline.dem_to_mesh import stage_dems
-    stage_dems(dem_dir_name, depth)
+    stage_dems(dem_dir_name)
 
 def main():
     """
@@ -63,7 +63,7 @@ def main():
     if args.command == "radar":
         run_radar(args.kml_url, crs_old=4326, crs_new=args.crs_new)
     elif args.command == "dem":
-        run_dem(args.dem_dir_name, args.depth)
+        run_dem(args.dem_dir_name)
     else:
         parser.print_help()
 
