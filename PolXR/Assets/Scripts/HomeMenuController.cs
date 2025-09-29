@@ -58,9 +58,19 @@ public class HomeMenuController : MonoBehaviour
     {
         yield return new WaitUntil(() => DataLoader.Instance.copyComplete);
 
-        string demPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "DEMs");
-        string flightlinesPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "Flightlines");
+        // Identify if Editor or Android build... If/else statements tested !Application.Editor, Application.Android, and UNITY_ANDROID do not work as conditional IDs this recognizes
+        #if UNITY_EDITOR
 
+            string demPath = ("Assets/AppData/DEMs");
+            string flightlinesPath = ("Assets/AppData/Flightlines");
+
+        #else
+            
+            string demPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "DEMs");
+            string flightlinesPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "Flightlines");
+
+        #endif
+        
         // Populate DEM dropdown
         TMP_Dropdown demDropdown = sceneDropdown.GetComponentInChildren<TMP_Dropdown>();
         if (demDropdown != null && Directory.Exists(demPath))
@@ -125,7 +135,14 @@ public class HomeMenuController : MonoBehaviour
         if (demDropdown != null)
         {
             string selectedDem = demDropdown.options[demDropdown.value].text;
-            string fullPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "DEMs", selectedDem);
+            
+            #if UNITY_EDITOR
+                string demPath = ("Assets/AppData/DEMs");
+                string fullPath = Path.Combine(demPath, selectedDem);
+            #else
+                string fullPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "DEMs", selectedDem);
+            #endif
+            
             DataLoader.Instance.demDirectoryPath = fullPath;
         }
 
@@ -133,7 +150,14 @@ public class HomeMenuController : MonoBehaviour
         foreach (var dropdownObj in dropdownList)
         {
             TMP_Dropdown dropdown = dropdownObj.GetComponentInChildren<TMP_Dropdown>();
-            if (dropdown != null)
+            if (dropdown != null && Application.isEditor)
+            {
+                string selectedFlightline = dropdown.options[dropdown.value].text;
+                string flightlinesPath = ("Assets/AppData/Flightlines");
+                string fullPath = Path.Combine(flightlinesPath, selectedFlightline);
+                DataLoader.Instance.flightlineDirectories.Add(fullPath);
+            }
+            else if (dropdown != null && !Application.isEditor)  // Application.Android and UNITY_ANDROID do not work as conditional IDs this recognizes
             {
                 string selectedFlightline = dropdown.options[dropdown.value].text;
                 string fullPath = Path.Combine(Application.persistentDataPath, "Assets", "AppData", "Flightlines", selectedFlightline);

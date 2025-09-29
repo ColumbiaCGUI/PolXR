@@ -114,8 +114,16 @@ public class DataLoader : MonoBehaviour
 
     private IEnumerator CopyStreamingAssetsToPersistentData()
     {
-        string sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
-        string destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
+        // Check if building from Editor or for Android for paths == Tested if/else with !Application.Editor, Application.Android, and UNITY_ANDROID do not work as conditional IDs this recognizes
+        #if UNITY_EDITOR
+            string sourcePath = Path.Combine("Assets/StreamingAssets/AppData");
+            string destinationPath = Path.Combine("Assets/AppData");
+
+        #else
+            string sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
+            string destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
+        #endif
+        
         string manifestPath = Path.Combine(sourcePath, "manifest.json");
 
         Debug.Log($"Source path: {sourcePath}");
@@ -159,8 +167,14 @@ public class DataLoader : MonoBehaviour
     {
         foreach (string relativeFilePath in manifest.files)
         {
-            string sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
-            string destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath);
+            // Check if building from Editor or for Android for paths == Tested if/else with !Application.Editor, Application.Android, and UNITY_ANDROID do not work as conditional IDs this recognizes
+            #if UNITY_EDITOR
+                string sourceFilePath = Path.Combine("Assets/AppData",relativeFilePath);
+                string destFilePath = Path.Combine("Assets/StreamingAssets/AppData", relativeFilePath);
+            #else
+                string sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
+                string destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath); 
+            #endif
 
             // Ensure the destination directory exists
             string destDir = Path.GetDirectoryName(destFilePath);
@@ -230,7 +244,7 @@ public class DataLoader : MonoBehaviour
 
     void Start()
     {
-        // Start copying files from StreamingAssets to PersistentDataPath
+        // Start copying files from StreamingAssets to PersistentDataPath/AppData Path
         StartCopyProcess();
 
         StartCoroutine(WaitForCopyAndProcess());
@@ -261,9 +275,14 @@ public class DataLoader : MonoBehaviour
     }
     public void LoadSceneData()
     {
-        // Update paths to point to PersistentDataPath
-        demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
-        flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();
+        // Check if building from Editor or for Android for paths == Tested if/else with !Application.Editor, Application.Android, and UNITY_ANDROID do not work as conditional IDs this recognizes
+        #if UNITY_EDITOR
+            demDirectoryPath = Path.Combine("Assets/AppData/DEMs", Path.GetFileName(demDirectoryPath));
+            flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine("Assets/AppData/Flightlines", Path.GetFileName(dir))).ToList();
+        #else
+            demDirectoryPath = Path.Combine(Application.persistentDataPath, "Assets/AppData/DEMs", Path.GetFileName(demDirectoryPath));
+            flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "Assets/AppData/Flightlines", Path.GetFileName(dir))).ToList();
+        #endif
 
         if (string.IsNullOrEmpty(demDirectoryPath))
         {
