@@ -278,7 +278,8 @@ def process_flightline(flightline_id, crs_old, crs_new):
             
             segment_id = matfile.replace(f'Data_{flightline_id}_', '').replace('.mat', '')
             
-            outdir = os.path.join('../PolXR/Assets/AppData/Flightlines', flightline_id, segment_id)
+            # Updated outdir from '/PolXR/Assets/AppData/Flightlines/' to 'StreamingAssets/AppData/Flightlines/'
+            outdir = os.path.join('../PolXR/Assets/StreamingAssets/AppData/Flightlines', flightline_id, segment_id)
             
             if not os.path.exists(outdir):
                 os.makedirs(outdir)

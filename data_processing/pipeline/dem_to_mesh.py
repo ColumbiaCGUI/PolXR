@@ -22,11 +22,14 @@ def dem_to_mesh(dem_name: str, filename: str):
     - downsample (int): Downsampling factor default 0.8 (80%) 
 
     Output:
-    The mesh is saved to PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}.
+    [DEPRECATED] The mesh is originally saved to: 
+    - PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}.
+    [UPDATE] To enable Android building, the meshes are now saved to: 
+    - PolXR/Assets/StreamingAssets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}
     """
     # Construct file paths
     input_path = f"pipeline/dems/{dem_name}/{filename}"
-    output_path = f"../PolXR/Assets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}"
+    output_path = f"../PolXR/Assets/StreamingAssets/AppData/DEMs/{dem_name}/{filename.replace('.tif', '.obj')}"
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -143,7 +146,7 @@ def dem_to_mesh(dem_name: str, filename: str):
     dem_meta = {
         "centroid": centroid
     }
-    dem_meta_path = os.path.join(f"../PolXR/Assets/AppData/DEMs/{dem_name}", 'meta.json')
+    dem_meta_path = os.path.join(f"../PolXR/Assets/StreamingAssets/AppData/DEMs/{dem_name}", 'meta.json')  # Streaming Assets!
     with open(dem_meta_path, 'w') as f:
         json.dump(dem_meta, f, indent=4)
 
