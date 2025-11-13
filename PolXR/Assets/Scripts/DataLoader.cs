@@ -238,6 +238,11 @@ public class DataLoader : MonoBehaviour
         radarMenu = GameObject.Find("RadarMenu");
         mainMenu = GameObject.Find("MainMenu");
 
+        if (radarMenu == null)
+        {
+            Debug.LogError("RadarMenu GameObject not found!");
+        }
+
         radarShader = Resources.Load<Shader>("Shaders/RadarShader");
         if (radarShader == null)
         {
