@@ -114,9 +114,22 @@ public class DataLoader : MonoBehaviour
 
     private IEnumerator CopyStreamingAssetsToPersistentData()
     {
-        string sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
-        string destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
-        string manifestPath = Path.Combine(sourcePath, "manifest.json");
+        string sourcePath;
+        string destinationPath;
+        string manifestPath;
+
+        if (Application.isEditor)
+        {
+            sourcePath = Path.Combine(Application.dataPath, "AppData");
+            destinationPath = Path.Combine(Application.streamingAssetsPath, "AppData");
+            manifestPath = Path.Combine(destinationPath, "manifest.json");
+        }
+        else
+        {
+            sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
+            destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
+            manifestPath = Path.Combine(sourcePath, "manifest.json");
+        }
 
         Debug.Log($"Source path: {sourcePath}");
         Debug.Log($"Destination path: {destinationPath}");
@@ -159,8 +172,19 @@ public class DataLoader : MonoBehaviour
     {
         foreach (string relativeFilePath in manifest.files)
         {
-            string sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
-            string destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath);
+            string sourceFilePath;
+            string destFilePath;
+
+            if (Application.isEditor)
+            {
+                sourceFilePath = Path.Combine(Application.dataPath, relativeFilePath);
+                destFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
+            }
+            else
+            {
+                sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
+                destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath);
+            }
 
             // Ensure the destination directory exists
             string destDir = Path.GetDirectoryName(destFilePath);
@@ -261,9 +285,18 @@ public class DataLoader : MonoBehaviour
     }
     public void LoadSceneData()
     {
-        // Update paths to point to PersistentDataPath
-        demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
-        flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();
+        if (Application.isEditor) 
+        {
+            // Update paths to point to streamingAssetsPath if deployed tethered via Editor
+            demDirectoryPath = Path.Combine(Application.streamingAssetsPath,"AppData/DEMS", Path.GetFileName(demDirectoryPath));
+            flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.streamingAssetsPath,"AppData/Flightlines", Path.GetFileName(dir))).ToList();
+        }
+        else
+        {
+            // Update paths to point to PersistentDataPath if APK (Android deployment)
+            demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
+            flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();
+        }
 
         if (string.IsNullOrEmpty(demDirectoryPath))
         {
@@ -350,6 +383,10 @@ public class DataLoader : MonoBehaviour
                             renderer.material.color = Color.Lerp(Color.black, Color.white, 0.25f);
                         }
                     }
+                    BoxCollider bc = demObj.AddComponent<BoxCollider>();
+                    Vector3 meshExtents = demObj.GetComponentInChildren<MeshRenderer>().bounds.extents;
+                    bc.size = new Vector3(meshExtents.x, meshExtents.y, meshExtents.z);
+                    Debug.Log(bc.size);
                 }
 
                 ScaleAndRotate(demObj, 0.0001f, 0.0001f, 0.001f, -90f);

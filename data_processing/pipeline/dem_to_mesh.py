@@ -127,9 +127,8 @@ def dem_to_mesh(dem_name: str, filename: str):
 
     """ if "surface" in input_path.lower():
         - TODO texture surface with imagery png with conditional clause OR separate script entirely
+        - This may have been resolved by John Mitnik
         """
-
-    
 
 
     # Calculate centroid
@@ -151,7 +150,6 @@ def dem_to_mesh(dem_name: str, filename: str):
     print(f"Mesh saved to {output_path}")
     
     
-
 
 def stage_dems(dem_name: str):
     """

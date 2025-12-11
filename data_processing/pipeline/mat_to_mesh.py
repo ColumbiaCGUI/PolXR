@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from scipy.io import loadmat
-#import impdar   #a secret tool we will use later to crop radargrams
+#import impdar   # TODO a secret tool we will use later to crop radargrams
 from pipeline.center_mesh import center_obj
 from scipy.io import loadmat
 from scipy.io.matlab import matfile_version

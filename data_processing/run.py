@@ -51,10 +51,10 @@ def main():
         "dem_dir_name", type=str, help="Name of the DEM directory to process."
     )
 
-    # Optional depth argument with default value of 9
-    dem_parser.add_argument(
-        "depth", type=int, nargs="?", default=9, help="Depth value for DEM processing (default: 9)."
-    )
+    # [REMOVED] Optional depth argument with default value of 9, when converting pcd to mesh
+    #dem_parser.add_argument(
+    #    "depth", type=int, nargs="?", default=9, help="Depth value for DEM processing (default: 9)."
+    #)
 
     # Parse arguments
     args = parser.parse_args()

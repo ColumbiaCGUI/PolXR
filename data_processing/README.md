@@ -70,17 +70,14 @@ python run.py radar https://data.cresis.ku.edu/data/rds/2008_Greenland_TO/kml_go
 
 ### Pre-processing DEM Data
 
-The following command detects the `dem_dir_name` (i.e. Petermann) to convert the .xyz files within that directory into .obj files and automatically load them into the correct Unity directory. Note that the .xyz files are generated through QGIS. Refer to the build instructions [here](https://docs.google.com/document/d/1vaTSFGdMRg9INGP5Ipzsgx5K-AoO1MsLKbJEeksdyGM/edit?tab=t.0#heading=h.ixnj4rkskt8r) to see how to use QGIS. Make sure that when you "Clip Raster By Extent", you save the `surface.xyz` and `bedrock.xyz` files to a new directory within pipeline/dems. The name for this new directory is what the package detects as dem_dir_name.
+The following command detects the `dem_dir_name` (i.e. Petermann) to convert the .TIF files within that directory into .obj files and automatically load them into the correct Unity directory. Note that the .TIF files are generated through QGIS. Refer to the build instructions [here](https://docs.google.com/document/d/1vaTSFGdMRg9INGP5Ipzsgx5K-AoO1MsLKbJEeksdyGM/edit?tab=t.0#heading=h.ixnj4rkskt8r) to see how to use QGIS. Make sure that when you "Clip Raster By Extent", you save the `surface.tif` and `bedrock.tif` files to a new directory within pipeline/dems. The name for this new directory is what the package detects as dem_dir_name.
 
 
 ```bash
-python run.py dem <dem_dir_name> [depth]
+python run.py dem <dem_dir_name>
 ```
 
 - `dem_dir_name` (required): The name of the directory containing DEM data.
-- `depth` (optional): The octree depth used for Poisson reconstruction during mesh creation. Higher values result in finer detail but require more resources. Default is 9.
-
-Note: If an error is encountered when running this command, try again or lower the depth and try again. This is a known issue (See Additional Documentation)
 
 ### Example Usage
 

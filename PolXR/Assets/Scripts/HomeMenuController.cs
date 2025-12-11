@@ -58,30 +58,43 @@ public class HomeMenuController : MonoBehaviour
     {
         yield return new WaitUntil(() => DataLoader.Instance.copyComplete);
 
-        string demPath = Path.Combine(Application.persistentDataPath, "AppData", "DEMs");
-        string flightlinesPath = Path.Combine(Application.persistentDataPath, "AppData", "Flightlines");
+        string demPath;
+        string flightlinesPath;
 
-        // Populate DEM dropdown
-        TMP_Dropdown demDropdown = sceneDropdown.GetComponentInChildren<TMP_Dropdown>();
-        if (demDropdown != null && Directory.Exists(demPath))
+        // Need different paths for Editor (bulding from PC to tethered headset) and building for Android (building from PC for standalone headset)
+        if (Application.isEditor)
         {
-            List<string> demDirs = new List<string>(Directory.GetDirectories(demPath));
-            demDropdown.ClearOptions();
-            List<TMP_Dropdown.OptionData> demOptions = new List<TMP_Dropdown.OptionData>();
-            foreach (string dir in demDirs)
-                demOptions.Add(new TMP_Dropdown.OptionData(Path.GetFileName(dir)));
-            demDropdown.AddOptions(demOptions);
+            // when building from Editor, Application.dataPath = /PolXR/Assets/
+            demPath = Path.Combine(Application.dataPath,"AppData","DEMs");
+            flightlinesPath = Path.Combine(Application.dataPath,"AppData","Flightlines");
+        }
+        else
+        {
+            demPath = Path.Combine(Application.persistentDataPath, "AppData", "DEMs");
+            flightlinesPath = Path.Combine(Application.persistentDataPath, "AppData", "Flightlines");
         }
 
-        // Cache flightline options
-        if (Directory.Exists(flightlinesPath))
-            cachedFlightlineOptions = new List<string>(Directory.GetDirectories(flightlinesPath));
+            // Populate DEM dropdown
+            TMP_Dropdown demDropdown = sceneDropdown.GetComponentInChildren<TMP_Dropdown>();
+            if (demDropdown != null && Directory.Exists(demPath))
+            {
+                List<string> demDirs = new List<string>(Directory.GetDirectories(demPath));
+                demDropdown.ClearOptions();
+                List<TMP_Dropdown.OptionData> demOptions = new List<TMP_Dropdown.OptionData>();
+                foreach (string dir in demDirs)
+                    demOptions.Add(new TMP_Dropdown.OptionData(Path.GetFileName(dir)));
+                demDropdown.AddOptions(demOptions);
+            }
 
-        // Populate existing initial dropdown (first Flightline)
-        PopulateDropdown(initialDropdown.GetComponentInChildren<TMP_Dropdown>());
+            // Cache flightline options
+            if (Directory.Exists(flightlinesPath))
+                cachedFlightlineOptions = new List<string>(Directory.GetDirectories(flightlinesPath));
 
-        loadButton.interactable = true;
-    }
+            // Populate existing initial dropdown (first Flightline)
+            PopulateDropdown(initialDropdown.GetComponentInChildren<TMP_Dropdown>());
+
+            loadButton.interactable = true;
+        }
 
     public void AddDropdown()
     {
@@ -122,10 +135,21 @@ public class HomeMenuController : MonoBehaviour
 
         // DEM selection
         TMP_Dropdown demDropdown = sceneDropdown.GetComponentInChildren<TMP_Dropdown>();
-        if (demDropdown != null)
+        if (demDropdown != null && Application.isEditor)
         {
+            // Path for booting tethered
+            string selectedDem = demDropdown.options[demDropdown.value].text;
+            string demPath = Path.Combine(Application.dataPath, "AppData", "DEMs");
+            string fullPath = Path.Combine(demPath, selectedDem);
+
+            DataLoader.Instance.demDirectoryPath = fullPath;
+        }
+        else if (demDropdown !=null && !Application.isEditor)  // This works somehow...
+        {   
+            // Path for booting standalone
             string selectedDem = demDropdown.options[demDropdown.value].text;
             string fullPath = Path.Combine(Application.persistentDataPath, "AppData", "DEMs", selectedDem);
+            
             DataLoader.Instance.demDirectoryPath = fullPath;
         }
 
@@ -133,7 +157,14 @@ public class HomeMenuController : MonoBehaviour
         foreach (var dropdownObj in dropdownList)
         {
             TMP_Dropdown dropdown = dropdownObj.GetComponentInChildren<TMP_Dropdown>();
-            if (dropdown != null)
+            if (dropdown != null && Application.isEditor)
+            {
+                string selectedFlightline = dropdown.options[dropdown.value].text;
+                string flightlinesPath = Path.Combine(Application.dataPath,"AppData","Flightlines");
+                string fullPath = Path.Combine(flightlinesPath, selectedFlightline);
+                DataLoader.Instance.flightlineDirectories.Add(fullPath);
+            }
+            else if (dropdown != null && !Application.isEditor)  // Application.Android and UNITY_ANDROID do not work as conditional IDs? This works somehow...
             {
                 string selectedFlightline = dropdown.options[dropdown.value].text;
                 string fullPath = Path.Combine(Application.persistentDataPath, "AppData", "Flightlines", selectedFlightline);
