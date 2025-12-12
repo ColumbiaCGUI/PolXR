@@ -414,9 +414,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 11500000, guid: 73288aa88db4518448fc5c281cbed901, type: 3}
-        m_TargetAssemblyTypeName: UnityEngine.Object, UnityEngine
-        m_MethodName: 
+      - m_Target: {fileID: 808797712}
+        m_TargetAssemblyTypeName: MeshTexturer, Assembly-CSharp
+        m_MethodName: ApplyTextureToBedrock
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -480,6 +480,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   demDirectoryPath: 
   flightlineDirectories: []
+  demo: 1
   copyComplete: 0
   sceneSelected: 0
 --- !u!1 &282376353
@@ -1310,6 +1311,52 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 2
     m_NumAlphaKeys: 2
+--- !u!1 &808797711
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 808797713}
+  - component: {fileID: 808797712}
+  m_Layer: 0
+  m_Name: MeshTexturer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &808797712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 808797711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9059a615ab20c534b8fb686a99faf0d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bedrock: []
+  surface: []
+--- !u!4 &808797713
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 808797711}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &842555299 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8898952998343183738, guid: d435cad152a8c874685b11ccf4cdae37, type: 3}
@@ -6602,9 +6649,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 11500000, guid: 73288aa88db4518448fc5c281cbed901, type: 3}
-        m_TargetAssemblyTypeName: UnityEngine.Object, UnityEngine
-        m_MethodName: 
+      - m_Target: {fileID: 808797712}
+        m_TargetAssemblyTypeName: MeshTexturer, Assembly-CSharp
+        m_MethodName: ApplyTextureToSurface
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -16708,3 +16755,4 @@ SceneRoots:
   - {fileID: 1918962362}
   - {fileID: 2050213345}
   - {fileID: 1353899346}
+  - {fileID: 808797713}

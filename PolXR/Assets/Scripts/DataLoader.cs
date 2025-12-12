@@ -36,6 +36,9 @@ public class DataLoader : MonoBehaviour
     [HideInInspector] public List<string> flightlineDirectories;
     private Shader radarShader;
     private GameObject menu;
+    private GameObject meshTexturer;
+    public bool demo;
+    private int demoSegmentCount = 10; //limits the number of flightlines loaded for December 2025 demo reel
     [HideInInspector] public bool copyComplete = false;
     [HideInInspector] public bool sceneSelected = false;
     private GameObject radarMenu;
@@ -114,22 +117,9 @@ public class DataLoader : MonoBehaviour
 
     private IEnumerator CopyStreamingAssetsToPersistentData()
     {
-        string sourcePath;
-        string destinationPath;
-        string manifestPath;
-
-        if (Application.isEditor)
-        {
-            sourcePath = Path.Combine(Application.dataPath, "AppData");
-            destinationPath = Path.Combine(Application.streamingAssetsPath, "AppData");
-            manifestPath = Path.Combine(destinationPath, "manifest.json");
-        }
-        else
-        {
-            sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
-            destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
-            manifestPath = Path.Combine(sourcePath, "manifest.json");
-        }
+        string sourcePath = Path.Combine(Application.streamingAssetsPath, "AppData");
+        string destinationPath = Path.Combine(Application.persistentDataPath, "AppData");
+        string manifestPath = Path.Combine(sourcePath, "manifest.json");
 
         Debug.Log($"Source path: {sourcePath}");
         Debug.Log($"Destination path: {destinationPath}");
@@ -172,19 +162,8 @@ public class DataLoader : MonoBehaviour
     {
         foreach (string relativeFilePath in manifest.files)
         {
-            string sourceFilePath;
-            string destFilePath;
-
-            if (Application.isEditor)
-            {
-                sourceFilePath = Path.Combine(Application.dataPath, relativeFilePath);
-                destFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
-            }
-            else
-            {
-                sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
-                destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath);
-            }
+            string sourceFilePath = Path.Combine(Application.streamingAssetsPath, relativeFilePath);
+            string destFilePath = Path.Combine(Application.persistentDataPath, relativeFilePath);
 
             // Ensure the destination directory exists
             string destDir = Path.GetDirectoryName(destFilePath);
@@ -285,18 +264,9 @@ public class DataLoader : MonoBehaviour
     }
     public void LoadSceneData()
     {
-        if (Application.isEditor) 
-        {
-            // Update paths to point to streamingAssetsPath if deployed tethered via Editor
-            demDirectoryPath = Path.Combine(Application.streamingAssetsPath,"AppData/DEMS", Path.GetFileName(demDirectoryPath));
-            flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.streamingAssetsPath,"AppData/Flightlines", Path.GetFileName(dir))).ToList();
-        }
-        else
-        {
-            // Update paths to point to PersistentDataPath if APK (Android deployment)
-            demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
-            flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();
-        }
+        // Update paths to point to PersistentDataPath
+        demDirectoryPath = Path.Combine(Application.persistentDataPath, "AppData/DEMs", Path.GetFileName(demDirectoryPath));
+        flightlineDirectories = flightlineDirectories.Select(dir => Path.Combine(Application.persistentDataPath, "AppData/Flightlines", Path.GetFileName(dir))).ToList();
 
         if (string.IsNullOrEmpty(demDirectoryPath))
         {
@@ -320,16 +290,18 @@ public class DataLoader : MonoBehaviour
 
         // Process DEMs
         ProcessDEMs(demContainer);
-
+        demContainer.transform.position += new Vector3(0f, -1.5f, 0f);
         // Process Flightlines
         foreach (string flightlineDirectory in flightlineDirectories)
         {
+            Debug.Log("Flightline directory: " + flightlineDirectory);
             GameObject flightlineContainer = CreateChildGameObject(Path.GetFileName(flightlineDirectory), radarContainer.transform);
             ProcessFlightlines(flightlineDirectory, flightlineContainer);
         }
 
         DisableAllRadarObjects(radarContainer);
         DisableMenus();
+        //this.transform.position += new Vector3(-11f, -2f, 0f);
     }
     private void DisableAllRadarObjects(GameObject radarContainer)
     {
@@ -357,6 +329,7 @@ public class DataLoader : MonoBehaviour
 
         // Get all .obj files in the selected DEM folder
         string[] objFiles = Directory.GetFiles(demDirectoryPath, "*.obj");
+        //Debug.Log("Object file count: " + objFiles.Length);
         if (objFiles.Length == 0)
         {
             Debug.LogWarning($"No .obj files found in the selected DEM directory: {demDirectoryPath}");
@@ -375,32 +348,46 @@ public class DataLoader : MonoBehaviour
                 demObj.name = fileNameWithoutExtension;
                 if (fileNameWithoutExtension.Equals("bedrock", StringComparison.OrdinalIgnoreCase))
                 {
-                    Renderer[] renderers = demObj.GetComponentsInChildren<Renderer>();
-                    foreach (Renderer renderer in renderers)
-                    {
-                        if (renderer != null)
-                        {
-                            renderer.material.color = Color.Lerp(Color.black, Color.white, 0.25f);
-                        }
-                    }
-                    BoxCollider bc = demObj.AddComponent<BoxCollider>();
-                    Vector3 meshExtents = demObj.GetComponentInChildren<MeshRenderer>().bounds.extents;
-                    bc.size = new Vector3(meshExtents.x, meshExtents.y, meshExtents.z);
-                    Debug.Log(bc.size);
+                    meshTexturer = GameObject.Find("MeshTexturer");
+                    MeshTexturer texturer = meshTexturer.GetComponent<MeshTexturer>();
+                    texturer.ApplyTextureToBedrock();
+                    //commented out while developing MeshTexturer.cs
+                    //renderer.material.color = Color.Lerp(Color.black, Color.white, 0.25f);
+                }
+                if (fileNameWithoutExtension.Equals("surface", StringComparison.OrdinalIgnoreCase))
+                {
+                    meshTexturer = GameObject.Find("MeshTexturer");
+                    MeshTexturer texturer = meshTexturer.GetComponent<MeshTexturer>();
+                    texturer.ApplyTextureToSurface();
                 }
 
                 ScaleAndRotate(demObj, 0.0001f, 0.0001f, 0.001f, -90f);
 
                 demObj.transform.SetParent(parent.transform);
+                //attach mesh colliders
+                Transform[] childTransforms = demObj.GetComponentsInChildren<Transform>();
+                foreach(Transform transChild in childTransforms)
+                {
+                    GameObject child = transChild.gameObject;
+                    child.AddComponent<MeshCollider>();
+                }
             }
         }
+        GameObject cabin = GameObject.Find("Cabin");
+        GameObject plane = GameObject.Find("Plane");
+        if(cabin != null) cabin.SetActive(false);
+        else Debug.LogError("Error: Gameobject 'Cabin' not found.");
+        if(plane != null) plane.SetActive(false);
+        else Debug.LogError("Error: Gameobject 'Plane' not found.");
     }
 
     private void ProcessFlightlines(string flightlineDirectory, GameObject parent)
     {
+        int countSegments = 0;
         string[] segmentFolders = Directory.GetDirectories(flightlineDirectory);
         foreach (string segmentFolder in segmentFolders)
         {
+            if(demo && countSegments > demoSegmentCount) break;
             string segmentName = Path.GetFileName(segmentFolder);
 
             // Create a container for the segment (e.g., 001, 002)
@@ -497,6 +484,7 @@ public class DataLoader : MonoBehaviour
                     }
                 }
             }
+            countSegments++;
         }
     }
 
