@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
+
 
 namespace LinePicking
 {
@@ -9,7 +9,7 @@ namespace LinePicking
 
         [SerializeField] private GameObject offsetParent;
 
-        [SerializeField] private XRRayInteractor rightControllerRayInteractor;
+        [SerializeField] private UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rightControllerRayInteractor;
 
         [SerializeField] private ToggleLinePickingMode linePickingState;
 

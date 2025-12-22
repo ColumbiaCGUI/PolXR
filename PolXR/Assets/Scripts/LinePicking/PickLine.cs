@@ -4,7 +4,7 @@ using System.Linq;
 using UniGLTF.MeshUtility;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit;
+
 
 namespace LinePicking
 {
@@ -14,7 +14,7 @@ namespace LinePicking
 
         [SerializeField] private InputActionReference guidedLinePickingToggle;
 
-        [SerializeField] private XRRayInteractor rightControllerRayInteractor;
+        [SerializeField] private UnityEngine.XR.Interaction.Toolkit.Interactors.XRRayInteractor rightControllerRayInteractor;
 
         [SerializeField] private GameObject markObjPrefab;
 

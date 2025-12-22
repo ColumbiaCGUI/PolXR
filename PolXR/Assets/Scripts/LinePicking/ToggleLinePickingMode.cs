@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit;
+
 
 namespace LinePicking
 {
@@ -11,8 +11,8 @@ namespace LinePicking
     
         [SerializeField] private InputActionReference toggleLinePickingButton;
     
-        [SerializeField] private XRInteractorLineVisual leftControllerLineVisual;
-        [SerializeField] private XRInteractorLineVisual rightControllerLineVisual;
+        [SerializeField] private UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual leftControllerLineVisual;
+        [SerializeField] private UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals.XRInteractorLineVisual rightControllerLineVisual;
 
         private Gradient _initialRightControllerValidLineGradient;
         

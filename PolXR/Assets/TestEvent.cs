@@ -13,16 +13,16 @@ public class TestEvent : MonoBehaviour
     {
         BoxCollider collider = lineObj.AddComponent<BoxCollider>();
 
-        lineObj.AddComponent<XRGrabInteractable>();
+        lineObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
-        XRGrabInteractable m_Interactable = lineObj.GetComponent<XRGrabInteractable>();
+        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable m_Interactable = lineObj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
         // m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
     }
 
     void TogglePolyline(SelectEnterEventArgs args)
     {
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable component = args.interactableObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor = args.interactorObject;
 
         Debug.Log("in here");
         component.transform.gameObject.SetActive(false);

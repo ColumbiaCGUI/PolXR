@@ -1,19 +1,19 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
-public class SubmenuDragHandle : XRBaseInteractable
+public class SubmenuDragHandle : UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable
 {
     public Transform menuToDrag;
     public float dragRange = 0.5f;
 
-    private XRBaseInteractor grabbingInteractor;
+    private UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor grabbingInteractor;
     private Vector3 grabOffset;
     private Vector3 originalLocalPosition;
 
     protected override void OnSelectEntered(SelectEnterEventArgs args)
     {
         base.OnSelectEntered(args);
-        grabbingInteractor = args.interactorObject.transform.GetComponent<XRBaseInteractor>();
+        grabbingInteractor = args.interactorObject.transform.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor>();
         originalLocalPosition = menuToDrag.position;
         grabOffset = menuToDrag.position - grabbingInteractor.transform.position;
     }

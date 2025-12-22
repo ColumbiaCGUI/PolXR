@@ -449,10 +449,10 @@ public class DataLoader : MonoBehaviour
                         bc.convex = true;
 
                         // Attach the Grab Interactable
-                        XRGrabInteractable IradarObj = radarObj.AddComponent<XRGrabInteractable>();
+                        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable IradarObj = radarObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
                         IradarObj.interactionLayers = InteractionLayerMask.NameToLayer("Radargram");
                         // Add Rotation Constraints for Y Axis Only
-                        IradarObj.movementType = XRBaseInteractable.MovementType.Instantaneous;
+                        IradarObj.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.Instantaneous;
                         //IradarObj.trackPosition = true;
                         //IradarObj.trackRotation = false;
                         // IradarObj.trackScale = false;
@@ -491,8 +491,8 @@ public class DataLoader : MonoBehaviour
     void ConvertRadargramToWorld(SelectEnterEventArgs args)
     {
         // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable component = args.interactableObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor = args.interactorObject;
 
         Transform meshTransform = component.transform;
         Debug.Log(meshTransform.name);
@@ -502,8 +502,8 @@ public class DataLoader : MonoBehaviour
     void ResetRadargram(SelectExitEventArgs args)
     {
         // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable component = args.interactableObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor = args.interactorObject;
 
         Transform radargramMesh = component.transform;
         Debug.Log(radargramMesh.name);
@@ -520,8 +520,8 @@ public class DataLoader : MonoBehaviour
     void OpenRadarMenu(SelectExitEventArgs args)
     {
         // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable component = args.interactableObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor = args.interactorObject;
 
         Transform radargramMesh = component.transform;
         Debug.Log(radargramMesh.name);
@@ -681,12 +681,12 @@ public class DataLoader : MonoBehaviour
             {
                 if (child.name.StartsWith("Flightline"))
                 {
-                    lineObj.AddComponent<XRSimpleInteractable>();
+                    lineObj.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
                     break;
                 }
             }
 
-            XRSimpleInteractable m_Interactable = lineObj.GetComponent<XRSimpleInteractable>();
+            UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable m_Interactable = lineObj.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
             m_Interactable.firstSelectEntered.AddListener(TogglePolyline);
 
             Vector3 lineDir = Vector3.Normalize(lineRenderer.GetPosition(lineRenderer.positionCount - 1) - lineRenderer.GetPosition(0));
@@ -707,8 +707,8 @@ public class DataLoader : MonoBehaviour
     void TogglePolyline(SelectEnterEventArgs args)
     {
         // Actually toggle the polyline
-        IXRSelectInteractable component = args.interactableObject;
-        IXRSelectInteractor interactor = args.interactorObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable component = args.interactableObject;
+        UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor = args.interactorObject;
 
         Transform flightlineContainer = component.transform.parent.transform;
         Debug.Log(flightlineContainer.name);
