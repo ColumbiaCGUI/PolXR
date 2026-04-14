@@ -42,7 +42,7 @@ Former Collaborators:
 * [Linda Mukarakate](), Barnard College
 * [Emily Mackevicius](https://emackev.github.io/), Columbia University
 * [Greg Ou](https://github.com/21go), Columbia University
-* [David Rios](https://github.com/MrDavidRios)
+* [David Rios](https://github.com/MrDavidRios), Columbia University
 * [Joel Salzman](https://github.com/joelsalzman), Columbia University
 * [Sofia Sanchez Zarate](https://github.com/sofiasanchez985), Columbia University
 
