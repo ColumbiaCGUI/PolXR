@@ -54,6 +54,31 @@ Ice-penetrating radar is a powerful tool to study glaciological processes but th
 
 VISER aims to improve interpretability of radargrams using XR. First, we place the user inside a digital twin of the relevant ice shelf so that all the data are properly contextualized relative to each other in space. Second, we model the radargrams as Unity GameObjects so that the features visible on the plots (which appear as textures on the GameObjects) also appear in the proper 3D geospatial context. Third, we implement numerous interfaces for analysis and manipulation so that users can explore the data.
 
+# How-To Deploy Application
+
+The Pol-XR Application can be deployed in two ways: Standalone (headset alone), or Tethered (headset wired to PC). Both methods currently require Unity to be installed. A free personal use license is acceptable to deploy this application - account may be required for download. 
+
+| Required Downloads | Description |
+| :-----------: | ----------- |
+| [Unity Version: 2022.3.20f1](https://unity.com/releases/editor/whats-new/2022.3.20) | Current version of Unity Editor Build for Pol-XR |
+| [Meta Horizon Link Application](https://www.meta.com/help/quest/1517439565442928/) | Use for building application in tethered mode |
+| Pol-XR Application | Either Git pull the most recent version of the application, or navigate above and download as ZIP |
+
+1. Launch UnityHub and Open the Pol-XR Project using the Editor Version stated above 
+2. Once the Editor has opened, navigate within the lower third toolbar, select Assets, then Scenes, and finally homescreen-no-mrtk. Double click to make sure it loads in the Unity player.
+3. Connect the Meta Quest2 or MetaQuest3 via USB to the computer.
+4. To build the application *Standalone*, navigate to the top toolbar and select File > Build Settings, select Android, and click Build and Run.
+To build  the application *Tethered*, open the Meta Link Application and see if the device is registered and connected. Place the headset on your head and boot the headset as normal. Once able, navigate to the Settings within the Main Menu. If Quick Access is visible, select Quest Link or AirLink - AirLink is an alternative option if WiFi is available, but not recommended due to volume of data to stream (steps are the same). Select “Devices” from the left menu, if neither are available. Once connected, select the computer in question and select Launch. Once in the Link Menu Lobby, select the Desktop icon from the menu bar below. Once the entire computer desktop is visible to the user, move onto the next step.
+5. Select Run (play button) located in the top-center toolbar of the Unity Editor window. Wait for application to load.
+6. Begin Pol-XR use by loading into the HomeScene and selecting a scene from the DEM dropdown menu and radar flights to visualize from the dropdown menu. Select load scene when ready to load scene. *Please Note:* flight lines from Greenland and Antarctica are contained in one menu item. If flight does not load it may be because it is data from a different hemisphere. Try again, or identify a flight of interest ahead of time.
+
+### How-To Generate Assets for Deployment
+In order to generate additional assets for Pol-XR use, the user is required to select the region of interest ahead of time. This portion of the pipeline is targeted at Polar Researchers who are developing a regional case study. It is simple and accessible to non-academic/research users, despite not being the stakeholders of the project.
+
+[How To Build the Pol-XR App - V2](https://docs.google.com/document/d/14tePFAZo64yKGk1ZaOYWqmi1WKJFhpcVagegzImrQYU/edit?usp=sharing) <- Awaiting transposition for GitHub
+
+<br />
+
 # Project Architecture
 
 The application contains two scenes:
