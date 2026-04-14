@@ -4,9 +4,11 @@ This application facilitates the 3D visualization of ice-penetrating radar data 
 
 Project Website: https://pgg.ldeo.columbia.edu/projects/VISER
 
+Unity Version: 2022.3.20f1
+
 _Note: This project is still in development_.
 
-***Last Updated 02/10/2026.***
+***Last Updated 04/14/2026.***
 
 # Team
 
@@ -25,7 +27,7 @@ Advisors:
 * Dr. [Kirsty Tinto](https://pgg.ldeo.columbia.edu/people/kirsty-j-tinto), Lamont-Doherty Earth Observatory
 * Professor [Steven Feiner](http://www.cs.columbia.edu/~feiner/), Columbia University
 
-Former Collaborators
+Former Collaborators:
 * [Qazi Ashikin](https://github.com/qaziashikin), Columbia University
 * [Ashley Cho](https://github.com/hc8756), Barnard College
 * [Eris Yunxin Gao](https://github.com/SamIAm2000), Barnard College
@@ -54,7 +56,7 @@ VISER aims to improve interpretability of radargrams using XR. First, we place t
 
 # Project Architecture
 
-The application contains two scenes.
+The application contains two scenes:
 * homescreen-no-mrtk
 * generic-no-mrtk
 
